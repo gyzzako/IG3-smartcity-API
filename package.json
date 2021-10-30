@@ -1,0 +1,30 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "description": "projet api smartcity-backend Arnaud & Donny",
+  "main": "src/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/app.js",
+    "initDB": "node scripts/js/initDB.js" 
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gyzzako/IG3-smartcity-API.git"
+  },
+  "author": "Arnaud & Donny",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gyzzako/IG3-smartcity-API/issues"
+  },
+  "homepage": "https://github.com/gyzzako/IG3-smartcity-API#readme",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-promise-router": "^4.1.0",
+    "pg": "^8.7.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.14"
+  }
+}
