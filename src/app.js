@@ -1,11 +1,13 @@
+const Router = require('./routes');
 const express = require('express');
 const app = express();
+const port = 3001;
 
-const port  = process.env.port || 3000;
+app.use(express.json());
+app.use(Router);
 
-//test
-app.get('/',(req,res) =>{
-    res.send(`<h2>Hello Smartcity</2>`)
+app.listen(port, () => {
+    console.log(`Example app listening at http://localhost:${port}`);
 });
-
-app.listen(port,() => console.log(`The server is running on port ${port}`));
+//TODO: FK delete on cascade ? pour quand on supprime un user -> tous les meals et order reliés à cet user sont aussi supprimé
+//TODO: transaction quand on crée une commande avec order et meal -> pour ne pas que un autre user prenne le meme repas qu'un autre en même temps
