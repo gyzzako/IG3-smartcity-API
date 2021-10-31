@@ -1,12 +1,12 @@
 CREATE SCHEMA IF NOT EXISTS donationdb;
 
-DROP TABLE IF EXISTS "user";
-DROP TABLE IF EXISTS "order";
-DROP TABLE IF EXISTS category;
-DROP TABLE IF EXISTS meal;
+DROP TABLE IF EXISTS "user" CASCADE;
+DROP TABLE IF EXISTS "order" CASCADE;
+DROP TABLE IF EXISTS category CASCADE;
+DROP TABLE IF EXISTS meal CASCADE;
 
 create table "user"(
-    user_id integer primary key generated always as identity,
+    id integer primary key generated always as identity,
     firstname varchar not null,
     lastname varchar not null,
     phone_number varchar,
@@ -19,25 +19,25 @@ create table "user"(
 );
 
 create table "order"(
-    order_id integer primary key generated always as identity,
+    id integer primary key generated always as identity,
     order_date date not null,
-    user_fk integer references "user"(user_id) DEFERRABLE INITIALLY IMMEDIATE
+    user_fk integer references "user"(id) DEFERRABLE INITIALLY IMMEDIATE not null
 );
 
 create table category(
-    category_id integer primary key generated always as identity,
-    category_name varchar not null
+    id integer primary key generated always as identity,
+    name varchar not null unique
 );
 
 create table meal(
-    meal_id integer primary key generated always as identity,
-    meal_name varchar not null,
+    id integer primary key generated always as identity,
+    name varchar not null,
     description varchar not null,
     portion_number integer not null,
     publication_date date not null,
-    user_fk integer references "user"(user_id)  DEFERRABLE INITIALLY IMMEDIATE,
-    category_fk integer references category(category_id) DEFERRABLE INITIALLY IMMEDIATE,
-    order_fk integer references "order"(order_id) DEFERRABLE INITIALLY IMMEDIATE,
-    meal_image bytea 
+    user_fk integer references "user"(id) DEFERRABLE INITIALLY IMMEDIATE not null ,
+    category_fk integer references category(id) DEFERRABLE INITIALLY IMMEDIATE not null,
+    order_fk integer references "order"(id) DEFERRABLE INITIALLY IMMEDIATE,
+    image bytea 
 );
 
