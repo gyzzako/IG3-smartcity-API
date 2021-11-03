@@ -11,7 +11,7 @@ module.exports.updateMeal = async (client, mealId, name, description, portionNum
 }
 
 module.exports.getAllMeals = async (client) => {
-    return await client.query(`SELECT * FROM meal ORDER BY id DESC`);
+    return await client.query(`SELECT *, TO_CHAR(publication_date::DATE, 'dd/mm/yyyy') as publication_date FROM meal ORDER BY id DESC`);
 }
 
 module.exports.deleteMealById = async (client, mealId) => {
