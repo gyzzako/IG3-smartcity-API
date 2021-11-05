@@ -10,7 +10,7 @@ module.exports.updateOrder = async (client, orderId, orderDate, userId) => {
 }
 
 module.exports.getAllOrders = async (client) => {
-    return await client.query(`SELECT *, TO_CHAR(order_date::DATE, 'dd/mm/yyyy') as order_date FROM "order" ORDER BY id`);
+    return await client.query(`SELECT *, TO_CHAR(order_date::DATE, 'dd-mm-yyyy') as order_date FROM "order" ORDER BY id`);
 }
 
 module.exports.deleteOrderById = async (client, orderId) => {

@@ -5,7 +5,7 @@ module.exports.createCategory = async (client, name) => {
 
 module.exports.updateCategory = async (client, categoryId, name) => {
     return await client.query(`
-    UPDATE meal SET name = $2 WHERE id = $1`, [categoryId, name]);
+    UPDATE category SET name = $2 WHERE id = $1`, [categoryId, name]);
 }
 
 module.exports.getAllCategories = async (client) => {

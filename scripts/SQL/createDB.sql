@@ -38,7 +38,7 @@ create table meal(
     user_fk integer references "user"(id) DEFERRABLE INITIALLY IMMEDIATE not null ,
     category_fk integer references category(id) DEFERRABLE INITIALLY IMMEDIATE not null,
     order_fk integer references "order"(id) DEFERRABLE INITIALLY IMMEDIATE,
-    image bytea 
+    image varchar 
 );
 
 INSERT INTO "user"(firstname,lastname,phone_number,username,password,isAdmin,province,city,street_and_number) VALUES ('Arnaud','Berg','0498989898','arnaud_berg','1234',true,'Namur','Walonnie','Chatelet 96'),

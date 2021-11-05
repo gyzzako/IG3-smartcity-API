@@ -1,7 +1,7 @@
-module.exports.createMeal = async (client, name, description, portionNumber, image, userId, categoryId) => {
+module.exports.createMeal = async (client, name, description, portionNumber, image, userId, categoryId, orderId) => {
     return await client.query(`
-    INSERT INTO meal(name, description, portion_number, publication_date, image, user_fk, category_fk)
-    VALUES ($1, $2 , $3, NOW(), $4, $5, $6)`, [name, description, portionNumber, image, userId, categoryId]);
+    INSERT INTO meal(name, description, portion_number, publication_date, image, user_fk, category_fk, order_fk)
+    VALUES ($1, $2 , $3, NOW(), $4, $5, $6, $7)`, [name, description, portionNumber, image, userId, categoryId, orderId]);
 }
 
 module.exports.updateMeal = async (client, mealId, name, description, portionNumber, publicationDate, image, userId, categoryId, orderId) => {
@@ -11,7 +11,7 @@ module.exports.updateMeal = async (client, mealId, name, description, portionNum
 }
 
 module.exports.getAllMeals = async (client) => {
-    return await client.query(`SELECT *, TO_CHAR(publication_date::DATE, 'dd/mm/yyyy') as publication_date FROM meal ORDER BY id DESC`);
+    return await client.query(`SELECT *, TO_CHAR(publication_date::DATE, 'dd-mm-yyyy') as publication_date FROM meal ORDER BY id DESC`);
 }
 
 module.exports.deleteMealById = async (client, mealId) => {
