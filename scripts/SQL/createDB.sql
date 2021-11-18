@@ -43,7 +43,7 @@ create table meal(
 
 INSERT INTO "user"(firstname,lastname,phone_number,username,password,isAdmin,province,city,street_and_number) VALUES ('Arnaud','Berg','0498989898','arnaud_berg','1234',true,'Namur','Walonnie','Chatelet 96'),
                                                                                                                         ('Donny Samuel','Mboma','0498989898','donny_dsm','4321',true,'Flandre Occidentale','Opwijk','kinstraat 26'),
-                                                                                                                        ('Emma','vdc','049888888','emma_manu','4444',false,'Namur','Namur','Namur 95'),
+                                                                                                                        ('Emma','manu','049888888','emma_manu','4444',false,'Namur','Namur','Namur 95'),
                                                                                                                         ('Christopher','Dubois','04987898','dubois_chris','12345',false,'Bruxelles','Bruxelles Uccle','Royaume 25'),
                                                                                                                         ('Cassy','Delambres','04987898','cassy_del','12345',false,'Bruxelles','Bruxelles Ixelles','Trone 44'),
                                                                                                                         ('Richard','Fontaine','02223568','riri_fofo','9978',false,'Namur','Namur','ISEN 66'),
