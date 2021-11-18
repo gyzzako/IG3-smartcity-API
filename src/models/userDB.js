@@ -1,3 +1,7 @@
+const {compareHash} = require('../utils/utils');
+
+var _this = this; //pour pouvoir utiliser la méthode getUserByUsername dans getUserForConnection
+
 module.exports.createUser = async (client, firstname, lastname, phoneNumber, username, password, isAdmin, province, city, streetAndNumber) => {
     return await client.query(`
     INSERT INTO "user"(firstname, lastname, phone_number, username, password, isAdmin, province, city, street_and_number)
@@ -22,9 +26,18 @@ module.exports.getUserByUsername = async (client, username) => {
     return await client.query(`SELECT * FROM "user" WHERE username = $1 LIMIT 1`, [username]);
 }
 
-/* A VOIR POUR LA CONNECTION*/
-module.exports.getUserByUsernameAndPassword = async (client, username, password) => {
-    return await client.query(`SELECT * FROM "user" WHERE username = $1 AND password = $2 LIMIT 1`, [username, password]);
+/* For the connection*/
+module.exports.getUserForConnection = async (client, username, password) => {
+    const userRows = await _this.getUserByUsername(client, username);
+    const user = userRows.rows[0];
+    console.log(user)
+    if(user !== undefined && !user.isadmin && await compareHash(password, user.password)){
+        return {userType: "client", value: user};
+    } else if (user !== undefined && user.isadmin && await compareHash(password, user.password)){
+        return {userType: "admin", value: user};
+    } else {
+        return {userType: "inconnu", value: null}
+    }
 }
 
 module.exports.deleteUserById = async (client, userId) => {

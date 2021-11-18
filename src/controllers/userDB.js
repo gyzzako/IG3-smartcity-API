@@ -1,5 +1,6 @@
 const pool = require('../models/database');
 const userDB = require('../models/userDB');
+const jwt = require('jsonwebtoken');
 
 module.exports.insertUser = async (req, res) => {
     const client = await pool.connect();
@@ -76,5 +77,45 @@ module.exports.deleteUser = async (req, res) => {
         res.sendStatus(500);
     }finally{
         client.release();
+    }
+}
+
+module.exports.login = async (req, res) => {
+    const {username, password} = req.body;
+    if(username === undefined || password === undefined){
+        res.sendStatus(400);
+    }else{
+        const client = await pool.connect();
+        try{
+            const result = await userDB.getUserForConnection(client, username, password);
+            const {userType, value} = result;
+            if(userType === "inconnu") {
+                res.sendStatus(404);
+            }else if(userType === "admin"){
+                const {id, firstname, lastname} = value;
+                const payload = {status: userType, value: {id, firstname, lastname}};
+                const token = jwt.sign(
+                    payload,
+                    process.env.SECRET_TOKEN,
+                    {expiresIn: '1d'}
+                );
+                res.json(token);
+
+            }else{
+                const {id, firstname, lastname} = value;
+                const payload = {status: userType, value: {id, firstname, lastname}};
+                const token = jwt.sign(
+                    payload,
+                    process.env.SECRET_TOKEN,
+                    {expiresIn: '1d'}
+                );
+                res.json(token);
+            }
+        }catch(e){
+            console.error(e);
+            res.sendStatus(500);
+        }finally{
+            client.release();
+        }
     }
 }
