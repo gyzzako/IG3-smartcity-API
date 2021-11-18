@@ -30,7 +30,6 @@ module.exports.getUserByUsername = async (client, username) => {
 module.exports.getUserForConnection = async (client, username, password) => {
     const userRows = await _this.getUserByUsername(client, username);
     const user = userRows.rows[0];
-    console.log(user)
     if(user !== undefined && !user.isadmin && await compareHash(password, user.password)){
         return {userType: "client", value: user};
     } else if (user !== undefined && user.isadmin && await compareHash(password, user.password)){
