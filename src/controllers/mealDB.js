@@ -90,6 +90,7 @@ module.exports.getAllMeals = async (req, res) => {
 
 module.exports.deleteMeal = async (req, res) => {
     const {id} = req.body;
+    console.log(id)
     const client = await pool.connect();
     try{
         await mealDB.deleteMealById(client, id);

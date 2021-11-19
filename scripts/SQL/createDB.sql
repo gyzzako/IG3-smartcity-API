@@ -37,7 +37,7 @@ create table meal(
     publication_date date not null,
     user_fk integer references "user"(id) DEFERRABLE INITIALLY IMMEDIATE not null ,
     category_fk integer references category(id) DEFERRABLE INITIALLY IMMEDIATE not null,
-    order_fk integer references "order"(id) DEFERRABLE INITIALLY IMMEDIATE,
+    order_fk integer references "order"(id) ON DELETE SET null,
     image varchar 
 );
 
