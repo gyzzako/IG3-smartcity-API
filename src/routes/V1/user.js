@@ -1,15 +1,17 @@
-const userController = require("../../controllers/userDB");
+const UserController = require("../../controllers/userDB");
+const AuthorizationMiddleware = require("../../middleware/Authorization");
+const JWTMiddleWare = require("../../middleware/IdentificationJWT");
 
 const Router = require("express-promise-router");
 const router = new Router;
 
-router.get("/", userController.getAllUsers);
+router.get("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, UserController.getAllUsers);
 
-router.patch("/", userController.updateUser);
+router.patch("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, UserController.updateUser); //TODO: middleware pour qu'un user ne puisse update que son user ?
 
-router.post("/", userController.insertUser);
-router.post("/login", userController.login);
+router.post("/", UserController.insertUser);
+router.post("/login", UserController.login);
 
-router.delete("/", userController.deleteUser);
+router.delete("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, UserController.deleteUser);
 
 module.exports = router;
