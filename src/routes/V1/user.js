@@ -5,7 +5,10 @@ const JWTMiddleWare = require("../../middleware/IdentificationJWT");
 const Router = require("express-promise-router");
 const router = new Router;
 
+router.get("/backoffice-authorization", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, (req, res) => {res.sendStatus(200)}) //autorisation pour accéder au backoffice
+
 router.get("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, UserController.getAllUsers);
+router.get("/:id", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, UserController.getUserById);
 
 router.patch("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, UserController.updateUser); //TODO: middleware pour qu'un user ne puisse update que son user ?
 

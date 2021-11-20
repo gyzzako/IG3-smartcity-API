@@ -10,7 +10,7 @@ module.exports.insertCategory = async (req, res) => {
             await categoryDB.createCategory(client, name);
             res.sendStatus(201);
         }else{
-            res.status(404).json({error: "category already exists"}); 
+            res.status(404).json({error: "Catégorie introuvable"}); 
         }
     }catch(e){
         console.error(e);
@@ -36,7 +36,7 @@ module.exports.updateCategory = async (req, res) => {//TODO: faire pour pouvoir 
             await categoryDB.updateCategory(client, categoryId, name);
             res.sendStatus(204);
         }else{ //if we try to change category name to one already in use
-            res.status(409).json({error: "category name already exists"});
+            res.status(409).json({error: "Catégorie introuvable"});
         }
     }catch(e){
         console.error(e);
@@ -52,6 +52,25 @@ module.exports.getAllCategories = async (req, res) => {
         const {rows: categories} = await categoryDB.getAllCategories(client);
         if(categories !== undefined){
             res.json(categories);
+        }else{
+            res.sendStatus(404);
+        }
+    }catch(e){
+        console.error(e);
+        res.sendStatus(500);
+    }finally{
+        client.release();
+    }
+}
+
+
+module.exports.getCategoryById = async (req, res) => {
+    const categoryId = req.params.id;
+    const client = await pool.connect();
+    try{
+        const {rows: category} = await categoryDB.getCategoryById(client, categoryId);
+        if(category !== undefined){
+            res.json(category);
         }else{
             res.sendStatus(404);
         }

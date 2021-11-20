@@ -13,6 +13,10 @@ module.exports.getAllOrders = async (client) => {
     return await client.query(`SELECT *, TO_CHAR(order_date::DATE, 'dd-mm-yyyy') as order_date FROM "order" ORDER BY id`);
 }
 
+module.exports.getOrderById = async (client, orderId) => {
+    return await client.query(`SELECT *, TO_CHAR(order_date::DATE, 'dd-mm-yyyy') as order_date FROM "order" WHERE id = $1 LIMIT 1`, [orderId]);
+}
+
 module.exports.deleteOrderById = async (client, orderId) => {
     return await client.query(`DELETE FROM "order" WHERE id = $1`,[orderId]);
 }

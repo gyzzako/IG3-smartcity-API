@@ -1,6 +1,7 @@
 const pool = require('../models/database');
 const userDB = require('../models/userDB');
 const jwt = require('jsonwebtoken');
+const {getHash} = require('../utils/utils');
 
 module.exports.insertUser = async (req, res) => {
     const client = await pool.connect();
@@ -8,10 +9,11 @@ module.exports.insertUser = async (req, res) => {
     try{
         const userExist = await userDB.userExistByUsername(client, username);
         if(!userExist){
-            await userDB.createUser(client, firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number);
+            const hashedPassword = await getHash(password);
+            await userDB.createUser(client, firstname, lastname, phone_number, username, hashedPassword, is_admin, province, city, street_and_number);
             res.sendStatus(201);
         }else{
-            res.status(409).json({error: "username already exists"});
+            res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
         }
     }catch(e){
         console.error(e);
@@ -33,13 +35,13 @@ module.exports.updateUser = async (req, res) => { //TODO: faire avec la gestion 
         const {rows: users} = await userDB.getUserByUsername(client, username);
         const user = users !== undefined ? users[0] : undefined;
 
-        if(userToModify === undefined) res.status(404).json({error: "user doesn't exist"});
+        if(userToModify === undefined) res.status(404).json({error: "Utilisateur introuvable"});
 
         if(!user || user.username === userToModify.username){ //if a user with the new username doens't exist or if this is the same username as before
             await userDB.updateUser(client, userId, firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number);
             res.sendStatus(204);
         }else{ //if we try to change username to one already in use
-            res.status(409).json({error: "username already exists"});
+            res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
         }
     }catch(e){
         console.error(e);
@@ -55,6 +57,24 @@ module.exports.getAllUsers = async (req, res) => {
         const {rows: users} = await userDB.getAllUsers(client);
         if(users !== undefined){
             res.json(users);
+        }else{
+            res.sendStatus(404);
+        }
+    }catch(e){
+        console.error(e);
+        res.sendStatus(500);
+    }finally{
+        client.release();
+    }
+}
+
+module.exports.getUserById = async (req, res) => {
+    const userId = req.params.id;
+    const client = await pool.connect();
+    try{
+        const {rows: user} = await userDB.getUserById(client, userId);
+        if(user !== undefined){
+            res.json(user);
         }else{
             res.sendStatus(404);
         }

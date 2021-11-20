@@ -5,6 +5,7 @@ const express = require('express');
 const app = express();
 const port = 3001;
 
+app.use(express.static('./upload'));
 app.use(cors()); //TODO: a voir avec le prof car son tuto pour accéder à notre api depuis react ne fonctionne pas -> donc ça en attentant
 app.use(express.json());
 app.use(Router);
