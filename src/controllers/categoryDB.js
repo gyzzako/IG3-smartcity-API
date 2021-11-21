@@ -89,8 +89,12 @@ module.exports.deleteCategory = async (req, res) => {
         await categoryDB.deleteCategoryById(client, id);
         res.sendStatus(204);
     }catch(e){
-        console.error(e);
-        res.sendStatus(500);
+        if(e.code == 23503){ // quand on essaie de supprimer une ligne qui est référencée par une FK autre part
+            res.status(403).json({error: "Impossible de supprimer cette catégorie car elle est liée à d'autres entités", errorCode: 23503});
+        }else{
+            console.error(e);
+            res.sendStatus(500);
+        }
     }finally{
         client.release();
     }
