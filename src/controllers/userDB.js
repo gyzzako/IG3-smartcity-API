@@ -4,13 +4,18 @@ const jwt = require('jsonwebtoken');
 const {getHash} = require('../utils/utils');
 
 module.exports.insertUser = async (req, res) => {
-    const client = await pool.connect();
     const {firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number} =  req.body;
+    if(firstname === undefined || lastname === undefined || phone_number === undefined || username === undefined || password === undefined || 
+        province === undefined || city === undefined || street_and_number === undefined){ 
+             res.sendStatus(400);
+    }
+    const client = await pool.connect();
     try{
         const userExist = await userDB.userExistByUsername(client, username);
         if(!userExist){
             const hashedPassword = await getHash(password);
-            await userDB.createUser(client, firstname, lastname, phone_number, username, hashedPassword, is_admin, province, city, street_and_number);
+            const isAdmin = is_admin === undefined ? false : is_admin;
+            await userDB.createUser(client, firstname, lastname, phone_number, username, hashedPassword, isAdmin, province, city, street_and_number);
             res.sendStatus(201);
         }else{
             res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
@@ -23,8 +28,12 @@ module.exports.insertUser = async (req, res) => {
     }
 }
 
-module.exports.updateUser = async (req, res) => { //TODO: faire avec la gestion des sessions VOIR correctioon labo 4 controleur/clientDB
+module.exports.updateUser = async (req, res) => {
     const {id: userId, firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number} = req.body;
+    if(firstname === undefined || lastname === undefined || phone_number === undefined || username === undefined || password === undefined || 
+        province === undefined || city === undefined || street_and_number === undefined){ 
+             res.sendStatus(400);
+    }
     const client = await pool.connect();
     try{
         //user to modify from the id in body
@@ -38,7 +47,8 @@ module.exports.updateUser = async (req, res) => { //TODO: faire avec la gestion 
         if(userToModify === undefined) res.status(404).json({error: "Utilisateur introuvable"});
 
         if(!user || user.username === userToModify.username){ //if a user with the new username doens't exist or if this is the same username as before
-            await userDB.updateUser(client, userId, firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number);
+            const hashedPassword = await getHash(password);
+            await userDB.updateUser(client, userId, firstname, lastname, phone_number, username, hashedPassword, is_admin, province, city, street_and_number);
             res.sendStatus(204);
         }else{ //if we try to change username to one already in use
             res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
@@ -115,17 +125,8 @@ module.exports.login = async (req, res) => {
             const {userType, value} = result;
             if(userType === "inconnu") {
                 res.sendStatus(404);
-            }else if(userType === "admin"){
-                const {id, firstname, lastname} = value;
-                const payload = {status: userType, value: {id, firstname, lastname}};
-                const token = jwt.sign(
-                    payload,
-                    process.env.SECRET_TOKEN,
-                    {expiresIn: '1d'}
-                );
-                res.json(token);
-
             }else{
+                // Pour les admin et user normaux
                 const {id, firstname, lastname} = value;
                 const payload = {status: userType, value: {id, firstname, lastname}};
                 const token = jwt.sign(

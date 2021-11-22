@@ -4,6 +4,7 @@ const userDB = require('../models/userDB');
 
 module.exports.insertOrder = async (req, res) => {
     const {user} = req.body;
+    if(user === undefined) res.sendStatus(400);
     const client = await pool.connect();
     try{
         const userExist = await userDB.userExistById(client, user.id);
@@ -24,6 +25,7 @@ module.exports.insertOrder = async (req, res) => {
 
 module.exports.updateOrder = async (req, res) => {
     const {id: orderId, order_date, user} = req.body;
+    if(user === undefined) res.sendStatus(400);
     const client = await pool.connect();
     try{
         const orderExist = await orderDB.orderExistById(client, orderId);

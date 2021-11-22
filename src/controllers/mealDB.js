@@ -10,9 +10,13 @@ const {saveImage} = require('../models/imageManager');
 const destFolderImages = "./src/upload/mealImages";
 
 module.exports.insertMeal = async (req, res) => {
-    const client = await pool.connect();
     const {user_fk: userId, name, description, portion_number, category_fk: categoryId, order_fk} = req.body;
     const image = req.files.image[0];
+    if(userId === undefined || name === undefined || description === undefined || portion_number === undefined || 
+        categoryId === undefined || image === undefined){
+            res.sendStatus(400);
+    }
+    const client = await pool.connect();
     try{
         let fullImageName = null;
         if(image !== undefined){
@@ -49,11 +53,14 @@ module.exports.insertMeal = async (req, res) => {
     }
 }
 
-module.exports.updateMeal = async (req, res) => {//TODO: faire pour pouvoir modifier que un seul attribut
-    //const {user, id: mealId, name, description, portion_number, publication_date, image, category, order} = req.body;
+module.exports.updateMeal = async (req, res) => {
     const {id: mealId, user_fk: userId, name, description, portion_number, publication_date, category_fk: categoryId, order_fk, oldImageName} = req.body;
     const images = req.files.image;
     const image = images !== undefined ? images[0] : undefined;
+    if(userId === undefined || name === undefined || description === undefined || portion_number === undefined || 
+        categoryId === undefined){
+            res.sendStatus(400);
+    }
     const client = await pool.connect();
     try{
         let fullImageName;
@@ -101,9 +108,17 @@ module.exports.getAllMeals = async (req, res) => {
     const client = await pool.connect();
     try{
         const {rows: meals} = await mealDB.getAllMeals(client);
-        if(mealDB !== undefined){
+        if(meals !== undefined){
+            /* NE PAS SUPP. Pas encore applicable car il faut changer le fonctionnement d'affichage du backoffice pour gérer les objects envoyés par l'api 
+            const {rows: categories} = await categoryDB.getAllCategories(client);
+            // on récupère l'object categorie complet (id et nom) à la place de juste l'id de la catégorie
+            meals.forEach(meal => {
+                const category = categories.find(category => category.id === meal.category_fk)
+                meal.category = category;
+                delete meal.category_fk;
+            });*/
             res.json(meals);
-        }else{
+        }else{111
             res.sendStatus(404);
         }
     }catch(e){

@@ -3,6 +3,7 @@ const categoryDB = require('../models/categoryDB');
 
 module.exports.insertCategory = async (req, res) => {
     const {name} = req.body;
+    if(name === undefined) res.sendStatus(400);
     const client = await pool.connect();
     try{
         const categoryExist = await categoryDB.categoryExistByName(client, name);
@@ -20,8 +21,9 @@ module.exports.insertCategory = async (req, res) => {
     }
 }
 
-module.exports.updateCategory = async (req, res) => {//TODO: faire pour pouvoir modifier que un seul attribut
+module.exports.updateCategory = async (req, res) => {
     const {id: categoryId, name} = req.body;
+    if(name === undefined) res.sendStatus(400);
     const client = await pool.connect();
     try{
         //category to modify from the id in body
