@@ -109,14 +109,16 @@ module.exports.getAllMeals = async (req, res) => {
     try{
         const {rows: meals} = await mealDB.getAllMeals(client);
         if(meals !== undefined){
-            /* NE PAS SUPP. Pas encore applicable car il faut changer le fonctionnement d'affichage du backoffice pour gérer les objects envoyés par l'api 
+            //NE PAS SUPP. Pas encore applicable car il faut changer le fonctionnement d'affichage du backoffice pour gérer les objects envoyés par l'api 
             const {rows: categories} = await categoryDB.getAllCategories(client);
-            // on récupère l'object categorie complet (id et nom) à la place de juste l'id de la catégorie
-            meals.forEach(meal => {
-                const category = categories.find(category => category.id === meal.category_fk)
-                meal.category = category;
-                delete meal.category_fk;
-            });*/
+            if (categories !== undefined) {
+                //on récupère l'object categorie complet (id et nom) à la place de juste l'id de la catégorie
+                meals.forEach(meal => {
+                    const category = categories.find(category => category.id === meal.category_fk)
+                    meal.category = category;
+                    delete meal.category_fk;
+                });
+            }
             res.json(meals);
         }else{111
             res.sendStatus(404);
@@ -135,6 +137,12 @@ module.exports.getMealById = async (req, res) => {
     try{
         const {rows: meal} = await mealDB.getMealById(client, mealId);
         if(meal !== undefined){
+            //on récupère l'object categorie complet (id et nom) à la place de juste l'id de la catégorie
+            const {rows: category} = await categoryDB.getCategoryById(client, meal[0].category_fk);
+            if(category !== undefined){
+                meal[0].category = category[0];
+                delete meal.category_fk;
+            }
             res.json(meal);
         }else{
             res.sendStatus(404);
