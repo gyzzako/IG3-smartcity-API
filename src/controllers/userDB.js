@@ -100,8 +100,12 @@ module.exports.deleteUser = async (req, res) => {
     const {id} = req.body;
     const client = await pool.connect();
     try{
-        await userDB.deleteUserById(client, id);
-        res.sendStatus(204);
+        const response = await userDB.deleteUserById(client, id);
+        if(response.rowCount > 0){
+            res.sendStatus(204);
+        }else{
+            res.sendStatus(404);
+        }
     }catch(e){
         if(e.code == 23503){ // quand on essaie de supprimer une ligne qui est référencée par une FK autre part
             res.status(403).json({error: "Impossible de supprimer cet utilisateur car il est lié à d'autres entités", errorCode: 23503});

@@ -1,7 +1,13 @@
-module.exports.createMeal = async (client, name, description, portionNumber, image, userId, categoryId, orderId) => {
-    return await client.query(`
-    INSERT INTO meal(name, description, portion_number, publication_date, image, user_fk, category_fk, order_fk)
-    VALUES ($1, $2 , $3, NOW(), $4, $5, $6, $7)`, [name, description, portionNumber, image, userId, categoryId, orderId]);
+module.exports.createMeal = async (client, name, description, portionNumber, image, userId, categoryId, orderId, publicationDate) => {
+    if(publicationDate === undefined){
+        return await client.query(`
+        INSERT INTO meal(name, description, portion_number, publication_date, image, user_fk, category_fk, order_fk)
+        VALUES ($1, $2 , $3, NOW(), $4, $5, $6, $7)`, [name, description, portionNumber, image, userId, categoryId, orderId]);
+    }else{
+        return await client.query(`
+        INSERT INTO meal(name, description, portion_number, publication_date, image, user_fk, category_fk, order_fk)
+        VALUES ($1, $2 , $3, $8, $4, $5, $6, $7)`, [name, description, portionNumber, image, userId, categoryId, orderId, publicationDate]);
+    }
 }
 
 module.exports.updateMeal = async (client, mealId, name, description, portionNumber, publicationDate, userId, categoryId, orderId, image) => {

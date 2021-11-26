@@ -3,13 +3,13 @@ const orderDB = require('../models/orderDB');
 const userDB = require('../models/userDB');
 
 module.exports.insertOrder = async (req, res) => {
-    const {user} = req.body;
-    if(user === undefined) res.sendStatus(400);
+    const {user, order_date} = req.body;
+    if(user?.id === undefined) res.sendStatus(400);
     const client = await pool.connect();
     try{
         const userExist = await userDB.userExistById(client, user.id);
         if(userExist){
-            await orderDB.createOrder(client, user.id);
+            await orderDB.createOrder(client, user.id, order_date);
             res.sendStatus(201);
         }else{
             if(!userExist) res.status(404).json({error: "Utilisateur introuvable"});
@@ -85,8 +85,12 @@ module.exports.deleteOrder = async (req, res) => {
     const {id} = req.body;
     const client = await pool.connect();
     try{
-        await orderDB.deleteOrderById(client, id);
-        res.sendStatus(204);
+        const response = await orderDB.deleteOrderById(client, id);
+        if(response.rowCount > 0){
+            res.sendStatus(204);
+        }else{
+            res.sendStatus(404);
+        }
     }catch(e){
         console.error(e);
         res.sendStatus(500);

@@ -1,16 +1,15 @@
-var fs = require('fs');
 const pool = require("../models/database");
 const mealDB = require("../models/mealDB");
 const userDB = require("../models/userDB");
 const categoryDB = require("../models/categoryDB");
 const orderDB = require("../models/orderDB");
 const uuid = require('uuid');
-const {saveImage} = require('../models/imageManager');
+const {handleImageUploadingToStorage, handleImageRemovingFromStorage} = require('../models/imageManager');
 
 const destFolderImages = "./src/upload/mealImages";
 
 module.exports.insertMeal = async (req, res) => {
-    const {user_fk: userId, name, description, portion_number, category_fk: categoryId, order_fk} = req.body;
+    const {user_fk: userId, name, description, portion_number, category_fk: categoryId, order_fk, publication_date} = req.body;
     const image = req.files.image[0];
     if(userId === undefined || name === undefined || description === undefined || portion_number === undefined || 
         categoryId === undefined || image === undefined){
@@ -21,7 +20,7 @@ module.exports.insertMeal = async (req, res) => {
         let fullImageName = null;
         if(image !== undefined){
             fullImageName = uuid.v4();
-            const imageFormat = await handleImageUploadingToStorage(image, fullImageName);
+            const imageFormat = await handleImageUploadingToStorage(image, fullImageName, destFolderImages);
             fullImageName += "." + imageFormat;
         }
 
@@ -34,7 +33,7 @@ module.exports.insertMeal = async (req, res) => {
         /*check if the user and category related exist. We also check if 
           there is an order parameter and if it's a valid one. If there is none, the order_fk is set to null */
         if(userExist && categoryExist && ((order_fk !== undefined && orderExist) || (order_fk === undefined))){ 
-            await mealDB.createMeal(client, name, description, portion_number, fullImageName, userId, categoryId, orderId);
+            await mealDB.createMeal(client, name, description, portion_number, fullImageName, userId, categoryId, orderId, publication_date);
             await client.query("COMMIT");
             res.sendStatus(201);
         }else{
@@ -66,7 +65,7 @@ module.exports.updateMeal = async (req, res) => {
         let fullImageName;
         if(image !== undefined){
             fullImageName = uuid.v4();
-            const imageFormat = await handleImageUploadingToStorage(image, fullImageName);
+            const imageFormat = await handleImageUploadingToStorage(image, fullImageName, destFolderImages);
             fullImageName += "." + imageFormat;
         }
         
@@ -75,7 +74,7 @@ module.exports.updateMeal = async (req, res) => {
         const userExist = await userDB.userExistById(client, userId);
         const categoryExist = await categoryDB.categoryExistById(client, categoryId)
         let orderExist, orderId;
-        if(order_fk !== undefined){
+        if(order_fk !== undefined && order_fk !== null){
             orderExist = await orderDB.orderExistById(client, order_fk);
             orderId = orderExist ? order_fk : undefined; //will either be the order id if it's a correct one or null if there's none written in parameters
         }
@@ -85,7 +84,7 @@ module.exports.updateMeal = async (req, res) => {
         if(mealExist && userExist && categoryExist && ((order_fk !== undefined && orderExist) || (order_fk === undefined))){
             await mealDB.updateMeal(client, mealId, name, description, portion_number, publication_date, userId, categoryId, orderId, fullImageName);
             await client.query("COMMIT");
-            if(image !== undefined) handleImageRemovingFromStorage(oldImageName); //ne supprime l'ancienne image seulement si on recoi une nouvelle
+            if(image !== undefined) handleImageRemovingFromStorage(oldImageName, destFolderImages); //ne supprime l'ancienne image seulement si on recoit une nouvelle
             res.sendStatus(204);
         }else{
             await client.query("ROLLBACK");
@@ -93,7 +92,7 @@ module.exports.updateMeal = async (req, res) => {
             else if(!userExist) res.status(404).json({error: "Utilisateur introuvable"}); 
             else if(!categoryExist) res.status(404).json({error: "Catégorie introuvable"}); 
             else if(!orderExist && order_fk !== undefined) res.status(404).json({error: "Commande introuvable"}); 
-            else res.sendStatus(404).json({error: "dddd"});
+            else res.sendStatus(404);
         }
     }catch(e){
         await client.query("ROLLBACK;");
@@ -161,10 +160,15 @@ module.exports.deleteMeal = async (req, res) => {
     const client = await pool.connect();
     try{
         const {rows: imagesName} = await mealDB.getMealImageById(client, id);
-        const imageName = imagesName[0].image;
-        await mealDB.deleteMealById(client, id);
-        if(imageName !== undefined) handleImageRemovingFromStorage(imageName);
-        res.sendStatus(204);
+        let imageName;
+        if(imagesName.length > 0) imageName = imagesName[0].image;
+        const response = await mealDB.deleteMealById(client, id);
+        if(response.rowCount > 0){
+            if(imageName !== undefined) handleImageRemovingFromStorage(imageName, destFolderImages);
+            res.sendStatus(204);
+        }else{
+            res.sendStatus(404);
+        }
     }catch(e){
         console.error(e);
         res.sendStatus(500);
@@ -172,32 +176,3 @@ module.exports.deleteMeal = async (req, res) => {
         client.release();
     }
 }
-
-async function handleImageUploadingToStorage(imageTest, imageName){
-    const image = imageTest;
-    if(image === undefined){
-        throw new error("Erreur lors de la sauvegarde de l'image");
-    }else{
-        try{
-            const response = await saveImage(image.buffer, imageName, destFolderImages);
-            return response.format;
-        }catch(e){
-            console.error(error);
-            throw new error("Erreur lors de la sauvegarde de l'image");
-        }
-    }
-}
-
-async function handleImageRemovingFromStorage(imageName){
-    if(imageName !== undefined && imageName !== null && imageName !== "null"){
-        fs.stat(destFolderImages, function (err, stats) {     
-            if(err) {
-                return console.error(err);
-            }
-            fs.unlink(destFolderImages + "/" + imageName, function(err){
-                 if(err) return console.error(err);
-            });  
-         });
-    }
-}
-
