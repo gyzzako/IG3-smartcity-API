@@ -14,8 +14,35 @@ module.exports.updateUser = async (client, userId, firstname, lastname, phoneNum
     WHERE id = $1`, [userId, firstname, lastname, phoneNumber, username, password, isAdmin, province, city, streetAndNumber]);
 }
 
-module.exports.getAllUsers = async (client) => {
-    return await client.query(`SELECT * FROM "user" ORDER BY id`);
+module.exports.getAllUsers = async (client, rowLimit, offset, searchElem) => {
+    let params = [];
+    let query = `SELECT * FROM "user"`;
+
+    if(searchElem !== undefined){
+        params.push("%" + searchElem + "%");
+        query += ` WHERE CAST(id AS TEXT) LIKE $${params.length} OR LOWER(firstname) LIKE $${params.length} OR LOWER(lastname) LIKE $${params.length} OR LOWER(username) LIKE $${params.length}`;
+    }
+
+    query += ` ORDER BY id`;
+
+    if(rowLimit !== undefined){
+        params.push(rowLimit);
+        query += ` LIMIT $${params.length}`;
+    }
+
+    if(rowLimit !== undefined && offset !== undefined){
+        params.push(offset);
+        query += ` OFFSET $${params.length}`;
+    }
+    return await client.query(query, params);
+}
+
+module.exports.getUsersCount = async (client, searchElem) => {
+    if(searchElem === undefined){
+        return await client.query(`SELECT COUNT(*) FROM "user"`);
+    }else{
+        return await client.query(`SELECT COUNT(*) FROM "user" WHERE CAST(id AS TEXT) LIKE $1 OR LOWER(firstname) LIKE $1 OR LOWER(lastname) LIKE $1 OR LOWER(username) LIKE $1`, ["%" + searchElem + "%"]);
+    }
 }
 
 module.exports.getUserById = async (client, userId) => {

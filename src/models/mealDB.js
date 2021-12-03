@@ -11,10 +11,6 @@ module.exports.createMeal = async (client, name, description, portionNumber, ima
 }
 
 module.exports.updateMeal = async (client, mealId, name, description, portionNumber, publicationDate, userId, categoryId, orderId, image) => {
-    /*return await client.query(`
-    UPDATE meal SET name = $2, description = $3, portion_number = $4, publication_date = $5, image = $6, user_fk = $7, category_fk = $8, order_fk = $9
-    WHERE id = $1`, [mealId, name, description, portionNumber, publicationDate, userId, categoryId, orderId, image]);*/
-
     if(orderId === undefined) orderId = null;
 
     let params = [mealId, name, description, portionNumber, publicationDate, userId, categoryId, orderId];
@@ -27,12 +23,41 @@ module.exports.updateMeal = async (client, mealId, name, description, portionNum
     return await client.query(query, params);
 }
 
-module.exports.getAllMeals = async (client) => {
-    return await client.query(`SELECT *, TO_CHAR(publication_date::DATE, 'dd-mm-yyyy') as publication_date FROM meal ORDER BY id DESC`);
+module.exports.getAllMeals = async (client, rowLimit, offset, searchElem) => {
+    let params = [];
+    let query = `SELECT *, TO_CHAR(meal.publication_date::DATE, 'dd-mm-yyyy') as publication_date, meal.id as id, meal.name as name,
+                category.id as category_id, category.name as category_name FROM meal LEFT JOIN category ON (meal.category_fk = category.id)`;
+
+    if(searchElem !== undefined){
+        params.push("%" + searchElem + "%");
+        query += ` WHERE CAST(meal.id AS TEXT) LIKE $${params.length} OR LOWER(meal.name) LIKE $${params.length} OR LOWER(meal.description) LIKE $${params.length}`;
+    }
+
+    query += ` ORDER BY meal.id DESC`;
+
+    if(rowLimit !== undefined){
+        params.push(rowLimit);
+        query += ` LIMIT $${params.length}`;
+    }
+
+    if(rowLimit !== undefined && offset !== undefined){
+        params.push(offset);
+        query += ` OFFSET $${params.length}`;
+    }
+    return await client.query(query, params);
+}
+
+module.exports.getMealsCount = async (client, searchElem) => {
+    if(searchElem === undefined){
+        return await client.query(`SELECT COUNT(*) FROM meal`);
+    }else{
+        return await client.query(`SELECT COUNT(*) FROM meal WHERE CAST(id AS TEXT) LIKE $1 OR LOWER(name) LIKE $1 OR LOWER(description) LIKE $1`, ["%" + searchElem + "%"]);
+    }
 }
 
 module.exports.getMealById = async (client, mealId) => {
-    return await client.query(`SELECT *, TO_CHAR(publication_date::DATE, 'dd-mm-yyyy') as publication_date FROM meal WHERE id = $1 LIMIT 1`, [mealId]);
+    return await client.query(`SELECT *, TO_CHAR(meal.publication_date::DATE, 'dd-mm-yyyy') as publication_date, meal.id as id, meal.name as name,
+        category.id as category_id, category.name as category_name FROM meal LEFT JOIN category ON (meal.category_fk = category.id) WHERE meal.id = $1 LIMIT 1`, [mealId]);
 }
 
 module.exports.getMealImageById = async (client, mealId) => {

@@ -3,57 +3,92 @@ const categoryDB = require('../models/categoryDB');
 
 module.exports.insertCategory = async (req, res) => {
     const {name} = req.body;
-    if(name === undefined) res.sendStatus(400);
-    const client = await pool.connect();
-    try{
-        const categoryExist = await categoryDB.categoryExistByName(client, name);
-        if(!categoryExist){
-            await categoryDB.createCategory(client, name);
-            res.sendStatus(201);
-        }else{
-            res.status(404).json({error: "Catégorie introuvable"}); 
+    if(name === undefined || name === ""){
+        res.sendStatus(400);
+    }else{
+        const client = await pool.connect();
+        try{
+            const categoryExist = await categoryDB.categoryExistByName(client, name);
+            if(!categoryExist){
+                await categoryDB.createCategory(client, name);
+                res.sendStatus(201);
+            }else{
+                res.status(404).json({error: "Catégorie introuvable"}); 
+            }
+        }catch(e){
+            console.error(e);
+            res.sendStatus(500);
+        }finally{
+            client.release();
         }
-    }catch(e){
-        console.error(e);
-        res.sendStatus(500);
-    }finally{
-        client.release();
     }
 }
 
 module.exports.updateCategory = async (req, res) => {
     const {id: categoryId, name} = req.body;
-    if(name === undefined) res.sendStatus(400);
-    const client = await pool.connect();
-    try{
-        //category to modify from the id in body
-        const {rows: categoriesToModify} = await categoryDB.getCategoryById(client, categoryId);
-        const categoryToModify = categoriesToModify !== undefined ? categoriesToModify[0] : undefined;
-
-        //check if a category exists with the name written in body
-        const {rows: categories} = await categoryDB.getCategoryByName(client, name);
-        const category = categories !== undefined ? categories[0] : undefined;
-
-        if(!category || category.name === categoryToModify.name){ //if a category with the new name doens't exist or if this is the same category name as before
-            await categoryDB.updateCategory(client, categoryId, name);
-            res.sendStatus(204);
-        }else{ //if we try to change category name to one already in use
-            res.status(409).json({error: "Catégorie introuvable"});
+    if(name === undefined || name === "" || categoryId === undefined || categoryId === ""){
+        res.sendStatus(400);
+    }else{
+        const client = await pool.connect();
+        try{
+            const promiseCategoryById = categoryDB.getCategoryById(client, categoryId); //category to modify from the id in body
+            const promiseCategoryByName = categoryDB.getCategoryByName(client, name); //check if a category exists with the name written in body
+            const promiseValues = await Promise.all([promiseCategoryById, promiseCategoryByName]);
+            const categoryToModify = promiseValues[0].rows[0] !== undefined ? promiseValues[0].rows[0] : undefined; 
+            const category = promiseValues[1].rows[0] !== undefined ? promiseValues[1].rows[0] : undefined; 
+            
+            if(categoryToModify === undefined){
+                res.sendStatus(404);
+            }else{
+                if(!category || category.name === categoryToModify.name){ //if a category with the new name doens't exist or if this is the same category name as before
+                    await categoryDB.updateCategory(client, categoryId, name);
+                    res.sendStatus(204);
+                }else{
+                    res.status(409).json({error: "Nom de catégorie déjà existant"});
+                }
+            }
+        }catch(e){
+            console.error(e);
+            res.sendStatus(500);
+        }finally{
+            client.release();
         }
-    }catch(e){
-        console.error(e);
-        res.sendStatus(500);
-    }finally{
-        client.release();
     }
 }
 
 module.exports.getAllCategories = async (req, res) => {
     const client = await pool.connect();
+    const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
+    const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
+    const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
+
+    if((req.query.rowLimit !== undefined && req.query.rowLimit === "") || (req.query.offset !== undefined && req.query.offset === "" ||
+        (req.query.searchElem !== undefined && req.query.searchElem === ""))){
+            res.sendStatus(400);
+    }else{
+        try{
+            const {rows: categories} = await categoryDB.getAllCategories(client, rowLimit, offset, searchElem);
+            if(categories !== undefined){
+                res.json(categories);
+            }else{
+                res.sendStatus(404);
+            }
+        }catch(e){
+            console.error(e);
+            res.sendStatus(500);
+        }finally{
+            client.release();
+        }
+    }   
+}
+
+module.exports.getCategoryCount = async (req, res) => {
+    const client = await pool.connect();
+    const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
     try{
-        const {rows: categories} = await categoryDB.getAllCategories(client);
-        if(categories !== undefined){
-            res.json(categories);
+        const {rows: counts} = await categoryDB.getCategoryCount(client, searchElem);
+        if(counts[0] !== undefined){
+            res.json(counts[0]);
         }else{
             res.sendStatus(404);
         }
@@ -64,7 +99,6 @@ module.exports.getAllCategories = async (req, res) => {
         client.release();
     }
 }
-
 
 module.exports.getCategoryById = async (req, res) => {
     const categoryId = req.params.id;

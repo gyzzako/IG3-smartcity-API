@@ -16,6 +16,7 @@ const upload = multer({
 
 
 router.get("/", JWTMiddleWare.identification, mealController.getAllMeals);
+router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, mealController.getMealsCount);
 router.get("/:id", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, mealController.getMealById);
 
 router.patch("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, upload.fields([

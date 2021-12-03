@@ -5,68 +5,99 @@ const {getHash} = require('../utils/utils');
 
 module.exports.insertUser = async (req, res) => {
     const {firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number} =  req.body;
-    if(firstname === undefined || lastname === undefined || phone_number === undefined || username === undefined || password === undefined || 
-        province === undefined || city === undefined || street_and_number === undefined){ 
+    if(firstname === undefined || firstname === "" || lastname === undefined || lastname === "" || phone_number === undefined || phone_number === "" ||
+        username === undefined || username === "" || password === undefined || password === "" || province === undefined || province === "" ||
+        city === undefined || city === "" || street_and_number === undefined || street_and_number === ""){ 
              res.sendStatus(400);
-    }
-    const client = await pool.connect();
-    try{
-        const userExist = await userDB.userExistByUsername(client, username);
-        if(!userExist){
-            const hashedPassword = await getHash(password);
-            const isAdmin = is_admin === undefined ? false : is_admin;
-            await userDB.createUser(client, firstname, lastname, phone_number, username, hashedPassword, isAdmin, province, city, street_and_number);
-            res.sendStatus(201);
-        }else{
-            res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
+    }else{
+        const client = await pool.connect();
+        try{
+            const userExist = await userDB.userExistByUsername(client, username);
+            if(!userExist){
+                const hashedPassword = await getHash(password);
+                const isAdmin = is_admin === undefined || is_admin === null || is_admin === "" ? false : is_admin;
+                await userDB.createUser(client, firstname, lastname, phone_number, username, hashedPassword, isAdmin, province, city, street_and_number);
+                res.sendStatus(201);
+            }else{
+                res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
+            }
+        }catch(e){
+            console.error(e);
+            res.sendStatus(500);
+        }finally{
+            client.release();
         }
-    }catch(e){
-        console.error(e);
-        res.sendStatus(500);
-    }finally{
-        client.release();
     }
 }
 
 module.exports.updateUser = async (req, res) => {
     const {id: userId, firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number} = req.body;
-    if(firstname === undefined || lastname === undefined || phone_number === undefined || username === undefined || password === undefined || 
-        province === undefined || city === undefined || street_and_number === undefined){ 
+    if(firstname === undefined || firstname === "" || lastname === undefined || lastname === "" || phone_number === undefined || phone_number === "" ||
+        username === undefined || username === "" || password === undefined || password === "" || province === undefined || province === "" ||
+        city === undefined || city === "" || street_and_number === undefined || street_and_number === ""){ 
              res.sendStatus(400);
-    }
-    const client = await pool.connect();
-    try{
-        //user to modify from the id in body
-        const {rows: usersToModify} = await userDB.getUserById(client, userId);
-        const userToModify = usersToModify !== undefined ? usersToModify[0] : undefined;
-
-        //check if a user exists with the username written in body
-        const {rows: users} = await userDB.getUserByUsername(client, username);
-        const user = users !== undefined ? users[0] : undefined;
-
-        if(userToModify === undefined) res.status(404).json({error: "Utilisateur introuvable"});
-
-        if(!user || user.username === userToModify.username){ //if a user with the new username doens't exist or if this is the same username as before
-            const hashedPassword = await getHash(password);
-            await userDB.updateUser(client, userId, firstname, lastname, phone_number, username, hashedPassword, is_admin, province, city, street_and_number);
-            res.sendStatus(204);
-        }else{ //if we try to change username to one already in use
-            res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
-        }
-    }catch(e){
-        console.error(e);
-        res.sendStatus(500);
-    }finally{
-        client.release();
+    }else{
+        const client = await pool.connect();
+        try{
+            const promiseUserToModify = userDB.getUserById(client, userId); //user to modify from the id in body
+            const promiseUser = userDB.getUserByUsername(client, username); //check if a user exists with the username written in body
+            const promiseValue = await Promise.all([promiseUserToModify, promiseUser]);
+            const userToModify = promiseValue[0].rows[0] !== undefined ? promiseValue[0].rows[0] : undefined; 
+            const user = promiseValue[1].rows[0] !== undefined ? promiseValue[1].rows[0] : undefined; 
+            
+            if(userToModify === undefined){
+                res.status(404).json({error: "Utilisateur introuvable"});
+            }else{
+                if(!user || username === userToModify.username){ //if a user with the new username doens't exist or if this is the same username as before
+                    const hashedPassword = await getHash(password);
+                    await userDB.updateUser(client, userId, firstname, lastname, phone_number, username, hashedPassword, is_admin, province, city, street_and_number);
+                    res.sendStatus(204);
+                }else{
+                    res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
+                }
+            }
+        }catch(e){
+            console.error(e);
+            res.sendStatus(500);
+        }finally{
+            client.release();
+        } 
     }
 }
 
 module.exports.getAllUsers = async (req, res) => {
     const client = await pool.connect();
+    const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
+    const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
+    const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
+
+    if((req.query.rowLimit !== undefined && req.query.rowLimit === "") || (req.query.offset !== undefined && req.query.offset === "") ||
+        (req.query.searchElem !== undefined && req.query.searchElem === "")){
+            res.sendStatus(404);
+    }else{
+        try{
+            const {rows: users} = await userDB.getAllUsers(client, rowLimit, offset, searchElem);
+            if(users !== undefined){
+                res.json(users);
+            }else{
+                res.sendStatus(404);
+            }
+        }catch(e){
+            console.error(e);
+            res.sendStatus(500);
+        }finally{
+            client.release();
+        }
+    }
+}
+
+module.exports.getUsersCount = async (req, res) => {
+    const client = await pool.connect();
+    const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
     try{
-        const {rows: users} = await userDB.getAllUsers(client);
-        if(users !== undefined){
-            res.json(users);
+        const {rows: counts} = await userDB.getUsersCount(client, searchElem);
+        if(counts[0] !== undefined){
+            res.json(counts[0]);
         }else{
             res.sendStatus(404);
         }
@@ -77,6 +108,7 @@ module.exports.getAllUsers = async (req, res) => {
         client.release();
     }
 }
+
 
 module.exports.getUserById = async (req, res) => {
     const userId = req.params.id;
@@ -120,7 +152,7 @@ module.exports.deleteUser = async (req, res) => {
 
 module.exports.login = async (req, res) => {
     const {username, password} = req.body;
-    if(username === undefined || password === undefined){
+    if(username === undefined || username === "" || password === undefined || password === ""){
         res.sendStatus(400);
     }else{
         const client = await pool.connect();

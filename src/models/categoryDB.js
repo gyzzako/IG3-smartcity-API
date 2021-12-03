@@ -8,8 +8,35 @@ module.exports.updateCategory = async (client, categoryId, name) => {
     UPDATE category SET name = $2 WHERE id = $1`, [categoryId, name]);
 }
 
-module.exports.getAllCategories = async (client) => {
-    return await client.query(`SELECT * FROM category ORDER BY name`);
+module.exports.getAllCategories = async (client, rowLimit, offset, searchElem) => {
+    let params = [];
+    let query = `SELECT * FROM category`;
+
+    if(searchElem !== undefined){
+        params.push("%" + searchElem + "%");
+        query += ` WHERE CAST(id AS TEXT) LIKE $${params.length} OR LOWER(name) LIKE $${params.length}`;
+    }
+
+    query += ` ORDER BY name`;
+
+    if(rowLimit !== undefined){
+        params.push(rowLimit);
+        query += ` LIMIT $${params.length}`;
+    }
+
+    if(rowLimit !== undefined && offset !== undefined){
+        params.push(offset);
+        query += ` OFFSET $${params.length}`;
+    }
+    return await client.query(query, params);
+}
+
+module.exports.getCategoryCount = async (client, searchElem) => {
+    if(searchElem === undefined){
+        return await client.query(`SELECT COUNT(*) FROM category`);
+    }else{
+        return await client.query(`SELECT COUNT(*) FROM category WHERE CAST(id AS TEXT) LIKE $1 OR LOWER(name) LIKE $1`, ["%" + searchElem + "%"]);
+    }
 }
 
 module.exports.getCategoryById = async (client, categoryId) => {
