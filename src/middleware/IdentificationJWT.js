@@ -1,5 +1,19 @@
 const jwt = require('jsonwebtoken');
 
+/**
+ * @swagger
+ * components:
+ *  securitySchemes:
+ *      bearerAuth:
+ *          type: http
+ *          scheme: bearer
+ *          bearerFormat: JWT
+ *  responses:
+ *      ErrorJWT:
+ *          description: JWT not valid
+ *      MissingJWT:
+ *          description: JWT not present
+ */
 module.exports.identification = async (req, res, next) => {
     const headerAuth = req.get('authorization');
     if(headerAuth !== undefined && headerAuth.includes("Bearer")){

@@ -1,3 +1,10 @@
+/**
+ *@swagger
+ * components:
+ *  responses:
+ *      mustBeAdmin:
+ *          description: This request can only be done by an administrator
+ */
 module.exports.mustBeAdmin = (req, res, next) =>{
     if(req.session !== undefined && req.session.authLevel === "admin"){
         next();

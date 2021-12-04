@@ -1,6 +1,44 @@
 const pool = require("../models/database");
 const categoryDB = require('../models/categoryDB');
 
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *      Category:
+ *          type: object
+ *          properties:
+ *              id:
+ *                  type: integer
+ *              name:
+ *                  type: string
+ *                  description: Category name
+ * 
+ *  responses:
+ *      CategoryBadJSONBody:
+ *          description: The JSON body is not correct
+ *      CategoryBadParams:
+ *          description: The URL parameters are not valid
+ */
+
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      CategoryAdded:
+ *          description: The category has been added
+ *      CategoryAlreadyExist:
+ *          description: Category name already taken
+ *  requestBodies:
+ *      CategoryToAdd:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          name:
+ *                              type: string
+ */
 module.exports.insertCategory = async (req, res) => {
     const {name} = req.body;
     if(name === undefined || name === ""){
@@ -13,7 +51,7 @@ module.exports.insertCategory = async (req, res) => {
                 await categoryDB.createCategory(client, name);
                 res.sendStatus(201);
             }else{
-                res.status(404).json({error: "Catégorie introuvable"}); 
+                res.status(409).json({error: "Nom de catégorie déjà existant"});
             }
         }catch(e){
             console.error(e);
@@ -24,6 +62,24 @@ module.exports.insertCategory = async (req, res) => {
     }
 }
 
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      CategoryUpdated:
+ *          description: The category has been updated
+ *  requestBodies:
+ *      CategoryToUpdate:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          id:
+ *                              type: integer
+ *                          name:
+ *                              type: string
+ */
 module.exports.updateCategory = async (req, res) => {
     const {id: categoryId, name} = req.body;
     if(name === undefined || name === "" || categoryId === undefined || categoryId === ""){
@@ -56,6 +112,20 @@ module.exports.updateCategory = async (req, res) => {
     }
 }
 
+
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      CategoriesFound:
+ *           description: Return an array of categories
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                      type: array
+ *                      items:
+ *                          $ref: '#/components/schemas/Category'
+ */
 module.exports.getAllCategories = async (req, res) => {
     const client = await pool.connect();
     const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
@@ -82,6 +152,18 @@ module.exports.getAllCategories = async (req, res) => {
     }   
 }
 
+
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      CategoryNumberFound:
+ *           description: Return the number of categories
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                       type: integer
+ */
 module.exports.getCategoryCount = async (req, res) => {
     const client = await pool.connect();
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
@@ -100,6 +182,17 @@ module.exports.getCategoryCount = async (req, res) => {
     }
 }
 
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      CategoryFound:
+ *           description: Return a category
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                       $ref: '#/components/schemas/Category'
+ */
 module.exports.getCategoryById = async (req, res) => {
     const categoryId = req.params.id;
     const client = await pool.connect();

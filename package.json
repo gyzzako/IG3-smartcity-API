@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/app.js",
     "initDB": "node scripts/js/initDB.js",
-    "initDBpostgre": "node scripts/js/initDB-postgre.js"
+    "genDoc": "node ./swagger/swagger_jsdoc.js"
   },
   "repository": {
     "type": "git",
@@ -33,6 +33,7 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "nodemon": "^2.0.14"
+    "nodemon": "^2.0.14",
+    "swagger-jsdoc": "^6.1.0"
   }
 }
