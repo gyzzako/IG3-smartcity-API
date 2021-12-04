@@ -12,7 +12,7 @@ module.exports.insertMeal = async (req, res) => {
     const {user_fk: userId, name, description, portion_number, category_fk: categoryId, order_fk, publication_date} = req.body;
     const image = req.files?.image[0];
     if(userId === undefined || userId === "" || name === undefined || name === "" || description === undefined || description === "" || portion_number === undefined || 
-        portion_number === "" || categoryId === undefined || categoryId === "" || image === undefined){
+        portion_number === "" || categoryId === undefined || categoryId === ""){ // || image === undefined
             res.sendStatus(400);
     }else{
         const client = await pool.connect();
@@ -56,6 +56,7 @@ module.exports.insertMeal = async (req, res) => {
 module.exports.updateMeal = async (req, res) => {
     const {id: mealId, user_fk: userId, name, description, portion_number, publication_date, category_fk: categoryId, order_fk, oldImageName} = req.body;
     const images = req.files?.image;
+    
     const image = images !== undefined ? images[0] : undefined;
     if(mealId === undefined || mealId === "" || userId === undefined || userId === "" || name === undefined || name === "" || description === undefined || description === "" || portion_number === undefined || 
         portion_number === "" || categoryId === undefined || categoryId === ""){

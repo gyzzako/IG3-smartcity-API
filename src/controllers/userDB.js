@@ -164,7 +164,7 @@ module.exports.login = async (req, res) => {
             }else{
                 // Pour les admin et user normaux
                 const {id, firstname, lastname} = value;
-                const payload = {status: userType, value: {id, firstname, lastname}};
+                const payload = {value: {status: userType, id, firstname, lastname}};
                 const token = jwt.sign(
                     payload,
                     process.env.SECRET_TOKEN,

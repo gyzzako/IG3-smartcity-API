@@ -9,9 +9,9 @@ router.get("/backoffice-authorization", JWTMiddleWare.identification, Authorizat
 
 router.get("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, UserController.getAllUsers);
 router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, UserController.getUsersCount);
-router.get("/:id", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, UserController.getUserById);
+router.get("/:id", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAuthorizedUserRoute, UserController.getUserById);
 
-router.patch("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, UserController.updateUser); //TODO: middleware pour qu'un user ne puisse update que son user ?
+router.patch("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAuthorizedUserRoute, UserController.updateUser);
 
 router.post("/", UserController.insertUser);
 router.post("/login", UserController.login);

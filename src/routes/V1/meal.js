@@ -17,15 +17,15 @@ const upload = multer({
 
 router.get("/", JWTMiddleWare.identification, mealController.getAllMeals);
 router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, mealController.getMealsCount);
-router.get("/:id", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, mealController.getMealById);
+router.get("/:id", JWTMiddleWare.identification, mealController.getMealById);
 
-router.patch("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, upload.fields([
+router.patch("/", JWTMiddleWare.identification, upload.fields([
     {name: 'image', maxCount: 1}
-]), mealController.updateMeal);
+]), AuthorizationMiddleware.mustBeAdmin, mealController.updateMeal); //TODO: demander prof si on peut appaler méthode controller depuis middleware -> pour faire en sorte qu'un user puisse modif que ses repas à lui
 
-router.post('/', JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, upload.fields([  //TODO: middleware pour qu'un user puisse poster un repas sur son compte mais pas créer un repas sur le compte d'un autre ??
-    {name: 'image', maxCount: 1}
-]), mealController.insertMeal);
+router.post('/', JWTMiddleWare.identification, upload.fields([
+{name: 'image', maxCount: 1}
+]), AuthorizationMiddleware.mustBeAuthorizedMealRoute, mealController.insertMeal);
 
 router.delete("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, mealController.deleteMeal);
 

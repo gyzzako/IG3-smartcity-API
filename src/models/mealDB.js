@@ -30,7 +30,7 @@ module.exports.getAllMeals = async (client, rowLimit, offset, searchElem) => {
 
     if(searchElem !== undefined){
         params.push("%" + searchElem + "%");
-        query += ` WHERE CAST(meal.id AS TEXT) LIKE $${params.length} OR LOWER(meal.name) LIKE $${params.length} OR LOWER(meal.description) LIKE $${params.length}`;
+        query += ` WHERE CAST(meal.id AS TEXT) LIKE $${params.length} OR LOWER(meal.name) LIKE $${params.length} OR LOWER(meal.description) LIKE $${params.length} OR CAST(order_fk AS TEXT) LIKE $${params.length}`;
     }
 
     query += ` ORDER BY meal.id DESC`;
