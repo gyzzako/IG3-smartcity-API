@@ -1,11 +1,11 @@
 require("dotenv").config();
 var cors = require('cors')
-const Router = require('./routes');
+const Router = require('./V1/routes');
 const express = require('express');
 const app = express();
 const port = 3001;
 
-app.use(express.static('./src/upload'));
+app.use(express.static('./src/V1/upload'));
 app.use(cors());
 app.use(express.json());
 app.use(Router);

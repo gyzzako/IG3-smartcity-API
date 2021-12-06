@@ -1,6 +1,6 @@
-const OrderController = require("../../controllers/orderDB");
-const AuthorizationMiddleware = require("../../middleware/Authorization");
-const JWTMiddleWare = require("../../middleware/IdentificationJWT");
+const OrderController = require("../controllers/orderDB");
+const AuthorizationMiddleware = require("../middleware/Authorization");
+const JWTMiddleWare = require("../middleware/IdentificationJWT");
 
 const Router = require("express-promise-router");
 const router = new Router;

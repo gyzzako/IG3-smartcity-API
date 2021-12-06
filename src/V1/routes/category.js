@@ -1,6 +1,6 @@
-const categoryController = require("../../controllers/categoryDB");
-const AuthorizationMiddleware = require("../../middleware/Authorization");
-const JWTMiddleWare = require("../../middleware/IdentificationJWT");
+const categoryController = require("../controllers/categoryDB");
+const AuthorizationMiddleware = require("../middleware/Authorization");
+const JWTMiddleWare = require("../middleware/IdentificationJWT");
 
 const Router = require("express-promise-router");
 const router = new Router;
@@ -51,9 +51,16 @@ router.get("/", categoryController.getAllCategories);
  *         - Category
  *      security:
  *          - bearerAuth: []
+ *      parameters:
+ *          - name: searchElem
+ *            description: Research element
+ *            in: query
+ *            required: false
+ *            schema:
+ *              type: string
  *      responses:
  *          200:
- *              $ref: '#/components/responses/CategoriesFound'
+ *              $ref: '#/components/responses/CategoryNumberFound'
  *          400:
  *              $ref: '#/components/responses/ErrorJWT'
  *          401:
@@ -61,7 +68,7 @@ router.get("/", categoryController.getAllCategories);
  *          403:
  *              $ref: '#/components/responses/mustBeAdmin'
  *          404:
- *              description: No category found
+ *              description: Not found
  *          500:
  *              description: Server error
  *
@@ -90,15 +97,13 @@ router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustB
  *              $ref: '#/components/responses/ErrorJWT' 
  *          401:
  *              $ref: '#/components/responses/MissingJWT'
- *          403:
- *              $ref: '#/components/responses/mustBeAdmin'
  *          404:
  *              description: Category not found
  *          500:
  *              description: Server error
  *
  */
-router.get("/:id", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, categoryController.getCategoryById);
+router.get("/:id", JWTMiddleWare.identification, categoryController.getCategoryById);
 
 /**
  * @swagger
@@ -168,6 +173,31 @@ router.patch("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAd
  */
 router.post("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, categoryController.insertCategory);
 
+/**
+ * @swagger
+ * /category:
+ *  delete:
+ *      tags:
+ *          - Category
+ *      security:
+ *          - bearerAuth: []
+ *      requestBody:
+ *          $ref: '#/components/requestBodies/CategoryToDelete'
+ *      responses:
+ *          204:
+ *              $ref: '#/components/responses/CategoryDeleted'
+ *          400:
+ *              $ref: '#/components/responses/ErrorJWT'
+ *          401:
+ *              $ref: '#/components/responses/MissingJWT'
+ *          403:
+ *              $ref: '#/components/responses/mustBeAdmin'
+ *          404:
+ *              description: No category found
+ *          500:
+ *              description: Erreur serveur
+ *
+ */
 router.delete("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, categoryController.deleteCategory);
 
 module.exports = router;

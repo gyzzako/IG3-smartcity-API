@@ -8,11 +8,98 @@ const {handleImageUploadingToStorage, handleImageRemovingFromStorage} = require(
 
 const destFolderImages = "./src/upload/mealImages";
 
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *      Meal:
+ *          type: object
+ *          properties:
+ *              id:
+ *                  type: integer
+ *              name:
+ *                  type: string
+ *                  description: Meal name
+ *              description:
+ *                  type: string
+ *                  description: Meal description
+ *              portion_number:
+ *                  type: integer
+ *                  description: Number of portion of the meal
+ *              publication_date:
+ *                  type: string
+ *                  description: When the meal was published
+ *              user_fk:
+ *                  type: integer
+ *                  description: User ID of who created the meal
+ *              category_fk:
+ *                  type: integer
+ *                  description: Category ID to which the meal belongs
+ *              order_fk:
+ *                  type: integer
+ *                  description: Order ID of the related order (null if there is none)
+ *              image:
+ *                  type: string
+ *                  description: Image path + name
+ * 
+ * 
+ *  responses:
+ *      MealBadJSONBody:
+ *          description: The JSON body is not correct
+ *      MealBadParams:
+ *          description: The URL parameters are not valid
+ */
+
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      MealAdded:
+ *          description: The meal has been added
+ *  requestBodies:
+ *      MealToAdd:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          name:
+ *                              type: string
+ *                              description: Meal name
+ *                          description:
+ *                              type: string
+ *                              description: Meal description
+ *                          portion_number:
+ *                              type: integer
+ *                              description: Number of portion of the meal
+ *                          publication_date:
+ *                              type: string
+ *                              description: When the meal was published (omit for today date)
+ *                          user_fk:
+ *                              type: integer
+ *                              description: User ID of who created the meal
+ *                          category_fk:
+ *                              type: integer
+ *                              description: Category ID to which the meal belongs
+ *                          order_fk:
+ *                              type: integer
+ *                              description: Order ID of the related order (omit if there is none)
+ *                          image:
+ *                              type: object
+ *                              description: Image bytes
+ *                      required:
+ *                          - id
+ *                          - name
+ *                          - description
+ *                          - portion_number
+ *                          - category_fk
+ *                          - image
+ */
 module.exports.insertMeal = async (req, res) => {
     const {user_fk: userId, name, description, portion_number, category_fk: categoryId, order_fk, publication_date} = req.body;
     const image = req.files?.image[0];
     if(userId === undefined || userId === "" || name === undefined || name === "" || description === undefined || description === "" || portion_number === undefined || 
-        portion_number === "" || categoryId === undefined || categoryId === ""){ // || image === undefined
+        portion_number === "" || categoryId === undefined || categoryId === "" || image === undefined){
             res.sendStatus(400);
     }else{
         const client = await pool.connect();
@@ -53,13 +140,62 @@ module.exports.insertMeal = async (req, res) => {
     }
 }
 
+
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      MealUpdated:
+ *          description: The meal has been updated
+ *  requestBodies:
+ *      MealToUpdate:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          id:
+ *                              type: integer
+ *                          name:
+ *                              type: string
+ *                              description: Meal name
+ *                          description:
+ *                              type: string
+ *                              description: Meal description
+ *                          portion_number:
+ *                              type: integer
+ *                              description: Number of portion of the meal
+ *                          publication_date:
+ *                              type: string
+ *                              description: When the meal was published
+ *                          user_fk:
+ *                              type: integer
+ *                              description: User ID of who created the meal
+ *                          category_fk:
+ *                              type: integer
+ *                              description: Category ID to which the meal belongs
+ *                          order_fk:
+ *                              type: integer
+ *                              description: Order ID of the related order (omit if there is none)
+ *                          image:
+ *                              type: object
+ *                              description: Image bytes (omit if you don't want to update the image)
+ *                      required:
+ *                          - id
+ *                          - name
+ *                          - description
+ *                          - portion_number
+ *                          - publication_date
+ *                          - user_fk
+ *                          - category_fk
+ */
 module.exports.updateMeal = async (req, res) => {
     const {id: mealId, user_fk: userId, name, description, portion_number, publication_date, category_fk: categoryId, order_fk, oldImageName} = req.body;
     const images = req.files?.image;
     
     const image = images !== undefined ? images[0] : undefined;
     if(mealId === undefined || mealId === "" || userId === undefined || userId === "" || name === undefined || name === "" || description === undefined || description === "" || portion_number === undefined || 
-        portion_number === "" || categoryId === undefined || categoryId === ""){
+        portion_number === "" || categoryId === undefined || categoryId === "" || publication_date === undefined || publication_date === ""){
             res.sendStatus(400);
     }else{
         const client = await pool.connect();
@@ -105,6 +241,20 @@ module.exports.updateMeal = async (req, res) => {
     }
 }
 
+
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      MealsFound:
+ *           description: Return an array of meals
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                      type: array
+ *                      items:
+ *                          $ref: '#/components/schemas/Meal'
+ */
 module.exports.getAllMeals = async (req, res) => {
     const client = await pool.connect();
     const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
@@ -142,6 +292,18 @@ module.exports.getAllMeals = async (req, res) => {
     }    
 }
 
+
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      MealNumberFound:
+ *           description: Return the number of meals
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                       type: integer
+ */
 module.exports.getMealsCount = async (req, res) => {
     const client = await pool.connect();
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
@@ -160,6 +322,18 @@ module.exports.getMealsCount = async (req, res) => {
     }
 }
 
+
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      MealFound:
+ *           description: Return a meal
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                       $ref: '#/components/schemas/Meal'
+ */
 module.exports.getMealById = async (req, res) => {
     const mealId = req.params.id;
     const client = await pool.connect();
@@ -187,7 +361,23 @@ module.exports.getMealById = async (req, res) => {
     }
 }
 
-
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      MealDeleted:
+ *          description: The meal has been deleted
+ *  requestBodies:
+ *      MealToDelete:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          id:
+ *                              type: integer
+ *                              description: Meal ID
+ */
 module.exports.deleteMeal = async (req, res) => {
     const {id} = req.body;
     const client = await pool.connect();

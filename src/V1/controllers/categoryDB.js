@@ -38,6 +38,8 @@ const categoryDB = require('../models/categoryDB');
  *                      properties:
  *                          name:
  *                              type: string
+ *                      required:
+ *                          - name
  */
 module.exports.insertCategory = async (req, res) => {
     const {name} = req.body;
@@ -77,8 +79,13 @@ module.exports.insertCategory = async (req, res) => {
  *                      properties:
  *                          id:
  *                              type: integer
+ *                              description: Category ID
  *                          name:
  *                              type: string
+ *                              description: Category name
+ *                      required:
+ *                          - id
+ *                          - name
  */
 module.exports.updateCategory = async (req, res) => {
     const {id: categoryId, name} = req.body;
@@ -211,6 +218,25 @@ module.exports.getCategoryById = async (req, res) => {
     }
 }
 
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      CategoryDeleted:
+ *          description: The category has been deleted
+ *  requestBodies:
+ *      CategoryToDelete:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          id:
+ *                              type: integer
+ *                              description: Category ID
+ *                      required:
+ *                          - id
+ */
 module.exports.deleteCategory = async (req, res) => {
     const {id} = req.body;
     const client = await pool.connect();

@@ -11,10 +11,10 @@ const options = {
     },
     // Path to the API docs
     apis: [
-        './src/controllers/*',
-        './src/middleware/*',
-        './src/models/*',
-        './src/routes/V1/*',
+        './src/V1/controllers/*',
+        './src/V1/middleware/*',
+        './src/V1/models/*',
+        './src/V1/routes/*',
     ],
 };
 

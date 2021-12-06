@@ -1,6 +1,6 @@
-const UserController = require("../../controllers/userDB");
-const AuthorizationMiddleware = require("../../middleware/Authorization");
-const JWTMiddleWare = require("../../middleware/IdentificationJWT");
+const UserController = require("../controllers/userDB");
+const AuthorizationMiddleware = require("../middleware/Authorization");
+const JWTMiddleWare = require("../middleware/IdentificationJWT");
 
 const Router = require("express-promise-router");
 const router = new Router;
