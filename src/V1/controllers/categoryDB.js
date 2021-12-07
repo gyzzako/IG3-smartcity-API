@@ -19,6 +19,8 @@ const categoryDB = require('../models/categoryDB');
  *          description: The JSON body is not correct
  *      CategoryBadParams:
  *          description: The URL parameters are not valid
+ *      CategoryAlreadyExist:
+ *          description: Category name already taken
  */
 
 /**
@@ -27,8 +29,6 @@ const categoryDB = require('../models/categoryDB');
  *  responses:
  *      CategoryAdded:
  *          description: The category has been added
- *      CategoryAlreadyExist:
- *          description: Category name already taken
  *  requestBodies:
  *      CategoryToAdd:
  *          content:
@@ -224,6 +224,8 @@ module.exports.getCategoryById = async (req, res) => {
  *  responses:
  *      CategoryDeleted:
  *          description: The category has been deleted
+ *      CategoryDeleteErrorEntityRelated:
+ *          description: Can not deleted the category because it has related entities
  *  requestBodies:
  *      CategoryToDelete:
  *          content:

@@ -5,8 +5,8 @@ const express = require('express');
 const app = express();
 const port = 3001;
 
-app.use(express.static('./src/V1/upload'));
 app.use(cors());
+app.use(express.static('./src/V1/upload'));
 app.use(express.json());
 app.use(Router);
 

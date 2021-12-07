@@ -367,6 +367,8 @@ module.exports.getMealById = async (req, res) => {
  *  responses:
  *      MealDeleted:
  *          description: The meal has been deleted
+ *      MealDeleteErrorEntityRelated:
+ *          description: Can not deleted the meal because it has related entities
  *  requestBodies:
  *      MealToDelete:
  *          content:

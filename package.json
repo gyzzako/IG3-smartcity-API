@@ -5,8 +5,8 @@
   "main": "src/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/app.js",
-    "initDB": "node scripts/js/initDB.js",
+    "dev": "nodemon ./src/app.js",
+    "initDB": "node ./scripts/js/initDB.js",
     "genDoc": "node ./swagger/swagger_jsdoc.js"
   },
   "repository": {

@@ -11,6 +11,8 @@ const router = new Router;
  *  get:
  *      tags:
  *         - Category
+ *      security:
+ *          - bearerAuth: []
  *      parameters:
  *          - name: rowLimit
  *            description: Number of rows returned
@@ -34,14 +36,24 @@ const router = new Router;
  *          200:
  *              $ref: '#/components/responses/CategoriesFound'
  *          400:
- *              $ref: '#/components/responses/CategoryBadParams'
+ *              description: JWT not valid or JSON body not correct
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          oneOf:
+ *                              - $ref: '#/components/responses/ErrorJWT'
+ *                              - $ref: '#/components/responses/CategoryBadParams'
+ *          401:
+ *              $ref: '#/components/responses/MissingJWT'
+ *          403:
+ *              $ref: '#/components/responses/mustBeAdmin'
  *          404:
  *              description: No category found
  *          500:
  *              description: Server error
  *
  */
-router.get("/", categoryController.getAllCategories);
+router.get("/",JWTMiddleWare.identification, categoryController.getAllCategories);
 
 /**
  * @swagger
@@ -191,7 +203,13 @@ router.post("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdm
  *          401:
  *              $ref: '#/components/responses/MissingJWT'
  *          403:
- *              $ref: '#/components/responses/mustBeAdmin'
+ *              description: You must be an administrator or the category can not be deleted
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          oneOf:
+ *                              - $ref: '#/components/responses/mustBeAdmin'
+ *                              - $ref: '#/components/responses/CategoryDeleteErrorEntityRelated'
  *          404:
  *              description: No category found
  *          500:

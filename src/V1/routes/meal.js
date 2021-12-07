@@ -9,7 +9,7 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({
     limits: {
-        fileSize: 5000000 // 5Mo
+        fileSize: 2000000 // 2Mo
     },
     storage: storage
 });
@@ -21,6 +21,8 @@ const upload = multer({
  *  get:
  *      tags:
  *         - Meal
+ *      security:
+ *          - bearerAuth: []
  *      parameters:
  *          - name: rowLimit
  *            description: Number of rows returned
@@ -44,7 +46,15 @@ const upload = multer({
  *          200:
  *              $ref: '#/components/responses/MealsFound'
  *          400:
- *              $ref: '#/components/responses/MealBadParams'
+ *              description: JWT not valid or JSON body not correct
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          oneOf:
+ *                              - $ref: '#/components/responses/ErrorJWT'
+ *                              - $ref: '#/components/responses/MealBadParams'
+ *          401:
+ *              $ref: '#/components/responses/MissingJWT'
  *          404:
  *              description: No meal found
  *          500:
@@ -72,7 +82,13 @@ router.get("/", JWTMiddleWare.identification, mealController.getAllMeals);
  *          200:
  *              $ref: '#/components/responses/MealNumberFound'
  *          400:
- *              $ref: '#/components/responses/ErrorJWT'
+ *              description: JWT not valid or JSON body not correct
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          oneOf:
+ *                              - $ref: '#/components/responses/ErrorJWT'
+ *                              - $ref: '#/components/responses/MealBadParams'
  *          401:
  *              $ref: '#/components/responses/MissingJWT'
  *          403:
@@ -142,7 +158,7 @@ router.get("/:id", JWTMiddleWare.identification, mealController.getMealById);
  *          403:
  *              $ref: '#/components/responses/mustBeAdmin'
  *          404:
- *              description: No Meal found
+ *              description: No meal found or related references not found
  *          500:
  *              description: Server error
  *
@@ -176,6 +192,8 @@ router.patch("/", JWTMiddleWare.identification, upload.fields([
  *              $ref: '#/components/responses/MissingJWT'
  *          403:
  *              $ref: '#/components/responses/mustBeAuthorizedOnRoute'
+ *          404:
+ *              description: Related references not found
  *          500:
  *              description: Server error
  *
@@ -202,9 +220,15 @@ router.post('/', JWTMiddleWare.identification, upload.fields([
  *          401:
  *              $ref: '#/components/responses/MissingJWT'
  *          403:
- *              $ref: '#/components/responses/mustBeAdmin'
+ *              description: You must be an administrator or the meal can not be deleted
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          oneOf:
+ *                              - $ref: '#/components/responses/mustBeAdmin'
+ *                              - $ref: '#/components/responses/MealDeleteErrorEntityRelated'
  *          404:
- *              description: No Meal found
+ *              description: No meal found
  *          500:
  *              description: Erreur serveur
  */

@@ -2,6 +2,52 @@ const pool = require("../models/database");
 const orderDB = require('../models/orderDB');
 const userDB = require('../models/userDB');
 
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *      Order:
+ *          type: object
+ *          properties:
+ *              id:
+ *                  type: integer
+ *              order_date:
+ *                  type: string
+ *                  description: Order date
+ *              user_fk:
+ *                  type: integer
+ *                  description: User ID of who created the order
+ *  responses:
+ *      OrderBadJSONBody:
+ *          description: The JSON body is not correct
+ *      OrderBadParams:
+ *          description: The URL parameters are not valid
+ */
+
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      OrderAdded:
+ *          description: The order has been added
+ *  requestBodies:
+ *      OrderToAdd:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          user:
+ *                              type: object
+ *                              properties:
+ *                                  id:
+ *                                      type: integer
+ *                          order_date:
+ *                              type: string
+ *                              description: When the order has been created (omit for today date)
+ *                      required:
+ *                          - user
+ */
 module.exports.insertOrder = async (req, res) => {
     const {user, order_date} = req.body;
     if(user?.id === undefined || user?.id === ""){
@@ -26,9 +72,39 @@ module.exports.insertOrder = async (req, res) => {
     }
 }
 
+
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      OrderUpdated:
+ *          description: The order has been updated
+ *  requestBodies:
+ *      OrderToUpdate:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          id:
+ *                              type: integer
+ *                              description: Order ID
+ *                          user:
+ *                              type: object
+ *                              properties:
+ *                                  id:
+ *                                      type: integer
+ *                          order_date:
+ *                              type: string
+ *                              description: When the order has been created (omit for today date)
+ *                      required:
+ *                          - id
+ *                          - user
+ *                          - order_date
+ */
 module.exports.updateOrder = async (req, res) => {
     const {id: orderId, order_date, user} = req.body;
-    if(orderId === undefined || orderId === "" || user?.id === undefined || user?.id === ""){
+    if(orderId === undefined || orderId === "" || user?.id === undefined || user?.id === "" || order_date === undefined || order_date === ""){
         res.sendStatus(400);
     }else{
         const client = await pool.connect();
@@ -55,6 +131,19 @@ module.exports.updateOrder = async (req, res) => {
     }
 }
 
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      OrdersFound:
+ *           description: Return an array of orders
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                      type: array
+ *                      items:
+ *                          $ref: '#/components/schemas/Order'
+ */
 module.exports.getAllOrders = async (req, res) => {
     const client = await pool.connect();
     const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
@@ -81,6 +170,17 @@ module.exports.getAllOrders = async (req, res) => {
     }    
 }
 
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      OrderNumberFound:
+ *           description: Return the number of orders
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                       type: integer
+ */
 module.exports.getOrdersCount = async (req, res) => {
     const client = await pool.connect();
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
@@ -99,6 +199,17 @@ module.exports.getOrdersCount = async (req, res) => {
     }
 }
 
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      OrderFound:
+ *           description: Return an order
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                       $ref: '#/components/schemas/Order'
+ */
 module.exports.getOrderById = async (req, res) => {
     const orderId = req.params.id;
     const client = await pool.connect();
@@ -117,6 +228,27 @@ module.exports.getOrderById = async (req, res) => {
     }
 }
 
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      OrderDeleted:
+ *          description: The order has been deleted
+ *      OrderDeleteErrorEntityRelated:
+ *          description: Can not deleted the order because it has related entities
+ *  requestBodies:
+ *      OrderToDelete:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          id:
+ *                              type: integer
+ *                              description: Order ID
+ *                      required:
+ *                          - id
+ */
 module.exports.deleteOrder = async (req, res) => {
     const {id} = req.body;
     const client = await pool.connect();

@@ -3,6 +3,86 @@ const userDB = require('../models/userDB');
 const jwt = require('jsonwebtoken');
 const {getHash} = require('../utils/utils');
 
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *      User:
+ *          type: object
+ *          properties:
+ *              id:
+ *                  type: integer
+ *              firstname:
+ *                  type: string
+ *                  description: User's firstname
+ *              lastname:
+ *                  type: string
+ *                  description: User's lastname
+ *              username:
+ *                  type: string
+ *                  description: Username of the user
+ *              password:
+ *                  type: string
+ *                  description: Hashed password of the user
+ *              is_admin:
+ *                  type: boolean
+ *                  description: Determine if a user if an administrator or not
+ *              province:
+ *                  type: string
+ *                  description: Province where the user lives
+ *              city:
+ *                  type: string
+ *                  description: City where the user lives
+ *              street_and_number:
+ *                  type: string
+ *                  description: Street and number where the user lives
+ *  responses:
+ *      UserBadJSONBody:
+ *          description: The JSON body is not correct
+ *      UserBadParams:
+ *          description: The URL parameters are not valid
+ *      UserAlreadyExist:
+ *          description: This username is already talen
+ */
+
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      UserAdded:
+ *          description: The user has been added
+ *  requestBodies:
+ *      UserToAdd:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          firstname:
+ *                              type: string
+ *                              description: User's firstname
+ *                          lastname:
+ *                              type: string
+ *                              description: User's lastname
+ *                          username:
+ *                              type: string
+ *                              description: Username of the user
+ *                          password:
+ *                              type: string
+ *                              description: Hashed password of the user
+ *                          is_admin:
+ *                              type: boolean
+ *                              description: Determine if a user if an administrator or not
+ *                          province:
+ *                              type: string
+ *                              description: Province where the user lives
+ *                          city:
+ *                              type: string
+ *                              description: City where the user lives
+ *                          street_and_number:
+ *                              type: string
+ *                              description: Street and number where the user lives
+ */
 module.exports.insertUser = async (req, res) => {
     const {firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number} =  req.body;
     if(firstname === undefined || firstname === "" || lastname === undefined || lastname === "" || phone_number === undefined || phone_number === "" ||
@@ -30,6 +110,19 @@ module.exports.insertUser = async (req, res) => {
     }
 }
 
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      UserUpdated:
+ *          description: The user has been updated
+ *  requestBodies:
+ *      UserToUpdate:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      $ref: '#/components/schemas/User'
+ */
 module.exports.updateUser = async (req, res) => {
     const {id: userId, firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number} = req.body;
     if(firstname === undefined || firstname === "" || lastname === undefined || lastname === "" || phone_number === undefined || phone_number === "" ||
@@ -65,6 +158,19 @@ module.exports.updateUser = async (req, res) => {
     }
 }
 
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      UsersFound:
+ *           description: Return an array of users
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                      type: array
+ *                      items:
+ *                          $ref: '#/components/schemas/User'
+ */
 module.exports.getAllUsers = async (req, res) => {
     const client = await pool.connect();
     const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
@@ -91,6 +197,17 @@ module.exports.getAllUsers = async (req, res) => {
     }
 }
 
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      UserNumberFound:
+ *           description: Return the number of user
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                       type: integer
+ */
 module.exports.getUsersCount = async (req, res) => {
     const client = await pool.connect();
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
@@ -109,7 +226,17 @@ module.exports.getUsersCount = async (req, res) => {
     }
 }
 
-
+/**
+ * @swagger
+ * components:
+ *  responses:
+ *      UserFound:
+ *           description: Return a user
+ *           content:
+ *               application/json:
+ *                   schema:
+ *                       $ref: '#/components/schemas/User'
+ */
 module.exports.getUserById = async (req, res) => {
     const userId = req.params.id;
     const client = await pool.connect();
@@ -128,6 +255,27 @@ module.exports.getUserById = async (req, res) => {
     }
 }
 
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      UserDeleted:
+ *          description: The user has been deleted
+ *      UserDeleteErrorEntityRelated:
+ *          description: Can not deleted the user because it has related entities
+ *  requestBodies:
+ *      UserToDelete:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          id:
+ *                              type: integer
+ *                              description: User ID
+ *                      required:
+ *                          - id
+ */
 module.exports.deleteUser = async (req, res) => {
     const {id} = req.body;
     const client = await pool.connect();
@@ -150,6 +298,28 @@ module.exports.deleteUser = async (req, res) => {
     }
 }
 
+
+/**
+ *@swagger
+ *components:
+ *  responses:
+ *      UserLogged:
+ *          description: The user has been logged
+ *  requestBodies:
+ *      UserToLogin:
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          username:
+ *                              type: string
+ *                          password:
+ *                              type: string
+ *                      required:
+ *                          - username
+ *                          - password
+ */
 module.exports.login = async (req, res) => {
     const {username, password} = req.body;
     if(username === undefined || username === "" || password === undefined || password === ""){
