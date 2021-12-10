@@ -70,6 +70,11 @@ INSERT INTO "order"(order_date,user_fk) VALUES ('2021-01-12',1),
                                                   ('2022-06-14',8);
 
 INSERT INTO meal(name,description,portion_number,publication_date,user_fk,category_fk,order_fk,image)
- VALUES ('Pizza-Veggie','Plat frais à chauffer au four à une temperature ne depassant pas 200 degrés',2,'2021-01-01',1,2,1,null ),
-('Carbonita-Do-Madrid','Plat chaud à manger le jour meme',1,'2020-12-01',2,5,3,null );
+VALUES ('Pizza-Veggie ','Plat frais à chauffer au four à une temperature ne depassant pas 200 degrés',2,'2021-01-01',1,2,1,'https://assets.afcdn.com/recipe/20170427/39421_w1024h768c1cx831cy571.jpg' ),
+       ('Carbonita-Do-Madrid','Plat chaud à manger le jour meme',1,'2020-12-01',2,5,3,'https://backend.panzani.fr/app/uploads/2021/05/recette-linguine-carbonara-italienne_mobile.jpg'),
+       ('Moules Belge','Plat chaud à consommer de préférence le meme jour et avec des frites ou autres choses',3,'2021-12-03',8,4,10,'https://sf1.viepratique.fr/wp-content/uploads/sites/2/2014/02/shutterstock_115952584.jpg'),
+       ('Bicky Burger','Burger Belge au boeuf ,salades et fromage à consommer de préférence le meme jour et chaud et avec un bon paquet des frites',7,'2021-12-10',7,1,9,'https://bicky.be/wp-content/uploads/2021/04/146430-Bicky-Crunchy-Chicken_508x306.png'),
+       ('Bicky nature','Parfait pour ceux qui ne consomment trop epcié, Pain, Fromage et viande de poulet ',8,'2021-12-24',3,1,2,'https://static.solucious.be/images/V0000524352_large.JPG'),
+       ('Sushi','Riz, saumon,concombre,gengembre mariné,sel et Wasabi',14,'2021-12-24',3,3,2,'https://media-cdn.tripadvisor.com/media/photo-s/17/e8/57/1d/um-dos-nossos-menus-de.jpg'),
+       ('Maki Sushi','Riz, saumon, oeuf,sel,et soja',4,'2022-01-01',4,3,4,'https://www3.nhk.or.jp/nhkworld/en/radio/cooking/update/meal_160408_l.jpg');
 
