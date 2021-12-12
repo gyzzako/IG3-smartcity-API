@@ -1,6 +1,6 @@
 const {compareHash} = require('../utils/utils');
 
-var _this = this; //pour pouvoir utiliser la méthode getUserByUsername dans getUserForConnection
+const _this = this; //pour pouvoir utiliser la méthode getUserByUsername dans getUserForConnection
 
 module.exports.createUser = async (client, firstname, lastname, phoneNumber, username, password, isAdmin, province, city, streetAndNumber) => {
     return await client.query(`

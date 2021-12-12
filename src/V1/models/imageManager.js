@@ -12,8 +12,8 @@ function saveImage(imageBuffer, imageName, destFolder){
         .toFile(`${destFolder}/${imageName}.jpeg`);
 };
 
-module.exports.handleImageUploadingToStorage = async (imageTest, imageName, destFolderImages) => {
-    const image = imageTest;
+module.exports.handleImageUploadingToStorage = async (imageFile, imageName, destFolderImages) => {
+    const image = imageFile;
     if(image === undefined){
         throw new Error("Erreur lors de la sauvegarde de l'image");
     }else{

@@ -9,7 +9,7 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({
     limits: {
-        fileSize: 2000000 // 2Mo
+        fileSize: 5000000 // 5MB
     },
     storage: storage
 });
@@ -165,7 +165,7 @@ router.get("/:id", JWTMiddleWare.identification, mealController.getMealById);
  */
 router.patch("/", JWTMiddleWare.identification, upload.fields([
     {name: 'image', maxCount: 1}
-]), AuthorizationMiddleware.mustBeAdmin, mealController.updateMeal); //TODO: demander prof si on peut appaler méthode controller depuis middleware -> pour faire en sorte qu'un user puisse modif que ses repas à lui
+]), AuthorizationMiddleware.mustBeAdmin, mealController.updateMeal);
 
 /**
  * @swagger

@@ -6,7 +6,8 @@ const orderDB = require("../models/orderDB");
 const uuid = require('uuid');
 const {handleImageUploadingToStorage, handleImageRemovingFromStorage} = require('../models/imageManager');
 
-const destFolderImages = "./src/upload/mealImages";
+const destFolderImages = "./src/V1/upload/mealImages";
+const imageURL = "http://localhost:3001/mealimages/";
 
 /**
  * @swagger
@@ -104,11 +105,12 @@ module.exports.insertMeal = async (req, res) => {
     }else{
         const client = await pool.connect();
         try{
-            let fullImageName = null;
+            let imageFullURL;
             if(image !== undefined){
-                fullImageName = uuid.v4();
+                let fullImageName = uuid.v4();
                 const imageFormat = await handleImageUploadingToStorage(image, fullImageName, destFolderImages);
                 fullImageName += "." + imageFormat;
+                imageFullURL = imageURL.concat(fullImageName);
             }
 
             const promiseUserExist = userDB.userExistById(client, userId);
@@ -123,7 +125,7 @@ module.exports.insertMeal = async (req, res) => {
             /*check if the user and category related exist. We also check if 
               there is an order parameter and if it's a valid one. If there is none, the order_fk is set to null */
             if(userExist && categoryExist && ((order_fk !== undefined && orderExist) || (order_fk === undefined))){ 
-                await mealDB.createMeal(client, name, description, portion_number, fullImageName, userId, categoryId, orderId, publication_date);
+                await mealDB.createMeal(client, name, description, portion_number, imageFullURL, userId, categoryId, orderId, publication_date);
                 res.sendStatus(201);
             }else{
                 if(!userExist) res.status(404).json({error: "Utilisateur introuvable"}); 
@@ -192,7 +194,6 @@ module.exports.insertMeal = async (req, res) => {
 module.exports.updateMeal = async (req, res) => {
     const {id: mealId, user_fk: userId, name, description, portion_number, publication_date, category_fk: categoryId, order_fk, oldImageName} = req.body;
     const images = req.files?.image;
-    
     const image = images !== undefined ? images[0] : undefined;
     if(mealId === undefined || mealId === "" || userId === undefined || userId === "" || name === undefined || name === "" || description === undefined || description === "" || portion_number === undefined || 
         portion_number === "" || categoryId === undefined || categoryId === "" || publication_date === undefined || publication_date === ""){
@@ -200,11 +201,12 @@ module.exports.updateMeal = async (req, res) => {
     }else{
         const client = await pool.connect();
         try{
-            let fullImageName;
+            let imageFullURL;
             if(image !== undefined){
-                fullImageName = uuid.v4();
+                let fullImageName = uuid.v4();
                 const imageFormat = await handleImageUploadingToStorage(image, fullImageName, destFolderImages);
                 fullImageName += "." + imageFormat;
+                imageFullURL = imageURL.concat(fullImageName);
             }
             
             const promiseMealExist = mealDB.mealExistById(client, mealId);
@@ -222,7 +224,7 @@ module.exports.updateMeal = async (req, res) => {
             /*check if the meal we want to modify exist and if the user and category related exists as well. We also check if 
               there is an order parameter and if it's a valid one. If there is none, the order_fk is set to null */
             if(mealExist && userExist && categoryExist && ((order_fk !== undefined && orderExist) || (order_fk === undefined))){
-                await mealDB.updateMeal(client, mealId, name, description, portion_number, publication_date, userId, categoryId, orderId, fullImageName);
+                await mealDB.updateMeal(client, mealId, name, description, portion_number, publication_date, userId, categoryId, orderId, imageFullURL);
                 if(image !== undefined) handleImageRemovingFromStorage(oldImageName, destFolderImages); //ne supprime l'ancienne image seulement si on recoit une nouvelle
                 res.sendStatus(204);
             }else{
@@ -389,7 +391,11 @@ module.exports.deleteMeal = async (req, res) => {
         if(imagesName.length > 0) imageName = imagesName[0].image;
         const response = await mealDB.deleteMealById(client, id);
         if(response.rowCount > 0){
-            if(imageName !== undefined) handleImageRemovingFromStorage(imageName, destFolderImages);
+            if(imageName !== undefined){
+                const temp =  imageName.split("/");
+                const imageFileName = temp[temp.length-1];
+                handleImageRemovingFromStorage(imageFileName, destFolderImages);
+            }
             res.sendStatus(204);
         }else{
             res.sendStatus(404);
