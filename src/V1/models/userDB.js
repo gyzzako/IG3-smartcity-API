@@ -50,7 +50,7 @@ module.exports.getUserById = async (client, userId) => {
 }
 
 module.exports.getUserByUsername = async (client, username) => {
-    return await client.query(`SELECT id, firstname, lastname, phone_number, username, isAdmin, province, city, street_and_number FROM "user" WHERE username = $1 LIMIT 1`, [username]);
+    return await client.query(`SELECT * FROM "user" WHERE username = $1 LIMIT 1`, [username]);
 }
 
 /* For the connection*/
