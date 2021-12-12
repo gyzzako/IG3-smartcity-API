@@ -45,8 +45,6 @@ const router = new Router;
  *                              - $ref: '#/components/responses/CategoryBadParams'
  *          401:
  *              $ref: '#/components/responses/MissingJWT'
- *          403:
- *              $ref: '#/components/responses/mustBeAdmin'
  *          404:
  *              description: No category found
  *          500:
@@ -74,7 +72,13 @@ router.get("/",JWTMiddleWare.identification, categoryController.getAllCategories
  *          200:
  *              $ref: '#/components/responses/CategoryNumberFound'
  *          400:
- *              $ref: '#/components/responses/ErrorJWT'
+ *              description: JWT not valid or JSON body not correct
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          oneOf:
+ *                              - $ref: '#/components/responses/ErrorJWT'
+ *                              - $ref: '#/components/responses/CategoryBadParams'
  *          401:
  *              $ref: '#/components/responses/MissingJWT'
  *          403:

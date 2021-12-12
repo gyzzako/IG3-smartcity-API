@@ -16,7 +16,7 @@ module.exports.updateUser = async (client, userId, firstname, lastname, phoneNum
 
 module.exports.getAllUsers = async (client, rowLimit, offset, searchElem) => {
     let params = [];
-    let query = `SELECT * FROM "user"`;
+    let query = `SELECT id, firstname, lastname, phone_number, username, isAdmin, province, city, street_and_number FROM "user"`;
 
     if(searchElem !== undefined){
         params.push("%" + searchElem + "%");
@@ -46,11 +46,11 @@ module.exports.getUsersCount = async (client, searchElem) => {
 }
 
 module.exports.getUserById = async (client, userId) => {
-    return await client.query(`SELECT * FROM "user" WHERE id = $1 LIMIT 1`, [userId]);
+    return await client.query(`SELECT id, firstname, lastname, phone_number, username, isAdmin, province, city, street_and_number FROM "user" WHERE id = $1 LIMIT 1`, [userId]);
 }
 
 module.exports.getUserByUsername = async (client, username) => {
-    return await client.query(`SELECT * FROM "user" WHERE username = $1 LIMIT 1`, [username]);
+    return await client.query(`SELECT id, firstname, lastname, phone_number, username, isAdmin, province, city, street_and_number FROM "user" WHERE username = $1 LIMIT 1`, [username]);
 }
 
 /* For the connection*/

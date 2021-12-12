@@ -94,8 +94,8 @@ module.exports.updateCategory = async (req, res) => {
     }else{
         const client = await pool.connect();
         try{
-            const promiseCategoryById = categoryDB.getCategoryById(client, categoryId); //category to modify from the id in body
-            const promiseCategoryByName = categoryDB.getCategoryByName(client, name); //check if a category exists with the name written in body
+            const promiseCategoryById = categoryDB.getCategoryById(client, categoryId); //catégorie à modifier depuis l'id dans le body
+            const promiseCategoryByName = categoryDB.getCategoryByName(client, name); //vérifie si une catégorie existe avec le nom spécifié dans le body
             const promiseValues = await Promise.all([promiseCategoryById, promiseCategoryByName]);
             const categoryToModify = promiseValues[0].rows[0] !== undefined ? promiseValues[0].rows[0] : undefined; 
             const category = promiseValues[1].rows[0] !== undefined ? promiseValues[1].rows[0] : undefined; 
@@ -103,7 +103,7 @@ module.exports.updateCategory = async (req, res) => {
             if(categoryToModify === undefined){
                 res.sendStatus(404);
             }else{
-                if(!category || category.name === categoryToModify.name){ //if a category with the new name doens't exist or if this is the same category name as before
+                if(!category || category.name === categoryToModify.name){ //si une catégorie avec le nouveau nom n'existe pas ou si c'est le même nom que avant
                     await categoryDB.updateCategory(client, categoryId, name);
                     res.sendStatus(204);
                 }else{

@@ -132,8 +132,8 @@ module.exports.updateUser = async (req, res) => {
     }else{
         const client = await pool.connect();
         try{
-            const promiseUserToModify = userDB.getUserById(client, userId); //user to modify from the id in body
-            const promiseUser = userDB.getUserByUsername(client, username); //check if a user exists with the username written in body
+            const promiseUserToModify = userDB.getUserById(client, userId); //utilisateur à modofier avec l'id du body
+            const promiseUser = userDB.getUserByUsername(client, username); //vérifié si un utilisateur existe avec le pseudo dans le body
             const promiseValue = await Promise.all([promiseUserToModify, promiseUser]);
             const userToModify = promiseValue[0].rows[0] !== undefined ? promiseValue[0].rows[0] : undefined; 
             const user = promiseValue[1].rows[0] !== undefined ? promiseValue[1].rows[0] : undefined; 
@@ -141,7 +141,7 @@ module.exports.updateUser = async (req, res) => {
             if(userToModify === undefined){
                 res.status(404).json({error: "Utilisateur introuvable"});
             }else{
-                if(!user || username === userToModify.username){ //if a user with the new username doens't exist or if this is the same username as before
+                if(!user || username === userToModify.username){ //si un utilisateur avec le nouveau pseudo ou si c'est le même qu'avant
                     const hashedPassword = await getHash(password);
                     await userDB.updateUser(client, userId, firstname, lastname, phone_number, username, hashedPassword, is_admin, province, city, street_and_number);
                     res.sendStatus(204);

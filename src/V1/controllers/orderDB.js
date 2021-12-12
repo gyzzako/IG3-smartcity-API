@@ -1,6 +1,7 @@
 const pool = require("../models/database");
 const orderDB = require('../models/orderDB');
 const userDB = require('../models/userDB');
+const mealDB = require('../models/mealDB');
 
 /**
  * @swagger
@@ -45,25 +46,52 @@ const userDB = require('../models/userDB');
  *                          order_date:
  *                              type: string
  *                              description: When the order has been created (omit for today date)
+ *                          meals:
+ *                              type: object
+ *                              properties:
+ *                                  id:
+ *                                      type: integer
  *                      required:
  *                          - user
  */
 module.exports.insertOrder = async (req, res) => {
-    const {user, order_date} = req.body;
+    const {user, order_date, meals_id: meals} = req.body;
     if(user?.id === undefined || user?.id === ""){
         res.sendStatus(400);
     }else{
         const client = await pool.connect();
         try{
+            await client.query("BEGIN;");
             const userExist = await userDB.userExistById(client, user.id);
             if(userExist){
-                await orderDB.createOrder(client, user.id, order_date);
-                res.sendStatus(201);
+                const orderResponse = await orderDB.createOrder(client, user.id, order_date);
+                let promises = [];
+                if(meals !== undefined && meals[0] !== undefined){
+                    meals.forEach(mealData =>{
+                        promises.push(mealDB.updateMeal(client, mealData.id, undefined, undefined, undefined, undefined, undefined, undefined, orderResponse.rows[0].id, undefined));            
+                    })
+                }
+                const response = await Promise.all(promises);
+                let i = 0;
+                let areMealsUpdated = true;
+                while(i < response.length && areMealsUpdated){
+                    if(response[i].rowCount !== 1) areMealsUpdated = false;
+                    i++;
+                }
+                if((meals === undefined || (meals[0] !== undefined && response[0] !== undefined)) && areMealsUpdated){ //pour pouvoir créer une commande avec rien ou avec les repas
+                    await client.query("COMMIT");
+                    res.sendStatus(201);
+                }else{
+                    await client.query("ROLLBACK");
+                    res.status(404).json({error: "Repas introuvable"});
+                }
             }else{
+                await client.query("ROLLBACK");
                 if(!userExist) res.status(404).json({error: "Utilisateur introuvable"});
                 else res.sendStatus(404);
             }
         }catch(e){
+            await client.query("ROLLBACK;");
             console.error(e);
             res.sendStatus(500);
         }finally{

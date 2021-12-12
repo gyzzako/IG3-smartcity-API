@@ -15,6 +15,11 @@ module.exports.mustBeAdmin = (req, res, next) =>{
     }
 }
 
+/*vérifie que c'est soit 
+                    un admin,
+                    un utilisateur qui modifie sont "profil",
+                    un utilisateur qui récupère son profil
+*/
 module.exports.mustBeAuthorizedUserRoute = (req, res, next) => {
     if(req.session !== undefined){
         if(req.session.authLevel === "admin"){
@@ -45,6 +50,11 @@ module.exports.mustBeAuthorizedUserRoute = (req, res, next) => {
     }
 }
 
+
+/*vérifie que c'est soit 
+                    un administrateur,
+                    ou que l'utilisateur qui fait une commande, la réalise bien pour lui et pas pour un autre user
+*/
 module.exports.mustBeAuthorizedOrderRoute = (req, res, next) => {
     if(req.session !== undefined){
         if(req.session.authLevel === "admin"){
@@ -55,7 +65,7 @@ module.exports.mustBeAuthorizedOrderRoute = (req, res, next) => {
                 if(req.body?.user?.id === undefined){
                     res.sendStatus(400);
                 }else{
-                    if(activeUserId === req.body.user?.id){
+                    if(activeUserId === req.body.user.id){
                         next();
                     }else{
                         res.sendStatus(403);
@@ -68,6 +78,10 @@ module.exports.mustBeAuthorizedOrderRoute = (req, res, next) => {
     }
 }
 
+/*vérifie que c'est soit 
+                    un administrateur,
+                    ou que l'utilisateur qui créé un repas, le créé bien pour lui et pas pour un autre user
+*/
 module.exports.mustBeAuthorizedMealRoute = (req, res, next) => {
     if(req.session !== undefined){
         if(req.session.authLevel === "admin"){
@@ -78,7 +92,7 @@ module.exports.mustBeAuthorizedMealRoute = (req, res, next) => {
                 if(req.body?.user_fk === undefined){
                     res.sendStatus(400);
                 }else{
-                    if(activeUserId === req.body?.user_fk){
+                    if(activeUserId === req.body.user_fk){
                         next();
                     }else{
                         res.sendStatus(403);

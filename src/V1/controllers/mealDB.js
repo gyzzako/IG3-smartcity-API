@@ -120,10 +120,9 @@ module.exports.insertMeal = async (req, res) => {
             const userExist = promiseValues[0];
             const categoryExist = promiseValues[1];
             const orderExist = promiseValues[2];
-            const orderId = (order_fk !== undefined && orderExist) ? order_fk : null; //will either be the order id if it's a correct one or null if there's none written in parameters
-    
-            /*check if the user and category related exist. We also check if 
-              there is an order parameter and if it's a valid one. If there is none, the order_fk is set to null */
+            const orderId = (order_fk !== undefined && orderExist) ? order_fk : null; //Sera soit l'id de la commande si il est correct ou null si rien n'est spécifié
+            
+            /*vérifie si l'utiliseur et la catégorie reliée existent. Vérification aussi si il y a une commande et si son id est valide.*/
             if(userExist && categoryExist && ((order_fk !== undefined && orderExist) || (order_fk === undefined))){ 
                 await mealDB.createMeal(client, name, description, portion_number, imageFullURL, userId, categoryId, orderId, publication_date);
                 res.sendStatus(201);
@@ -178,25 +177,18 @@ module.exports.insertMeal = async (req, res) => {
  *                              description: Category ID to which the meal belongs
  *                          order_fk:
  *                              type: integer
- *                              description: Order ID of the related order (omit if there is none)
+ *                              description: Order ID of the related order (omit if there is none or -1 to remove the current one)
  *                          image:
  *                              type: object
- *                              description: Image bytes (omit if you don't want to update the image)
+ *                              description: Image bytes
  *                      required:
  *                          - id
- *                          - name
- *                          - description
- *                          - portion_number
- *                          - publication_date
- *                          - user_fk
- *                          - category_fk
  */
 module.exports.updateMeal = async (req, res) => {
     const {id: mealId, user_fk: userId, name, description, portion_number, publication_date, category_fk: categoryId, order_fk, oldImageName} = req.body;
     const images = req.files?.image;
     const image = images !== undefined ? images[0] : undefined;
-    if(mealId === undefined || mealId === "" || userId === undefined || userId === "" || name === undefined || name === "" || description === undefined || description === "" || portion_number === undefined || 
-        portion_number === "" || categoryId === undefined || categoryId === "" || publication_date === undefined || publication_date === ""){
+    if(mealId === undefined || mealId === ""){
             res.sendStatus(400);
     }else{
         const client = await pool.connect();
@@ -219,18 +211,25 @@ module.exports.updateMeal = async (req, res) => {
             let orderExist, orderId;
             if(order_fk !== undefined && order_fk !== null){
                 orderExist = await orderDB.orderExistById(client, order_fk);
-                orderId = orderExist ? order_fk : undefined; //will either be the order id if it's a correct one or null if there's none written in parameters
+                orderId = orderExist ? order_fk : undefined; //sera soit l'id de la commande si il y a correspondance ou undefined si rien n'est précisé dans le body
+                if(order_fk == -1) orderId = null;
             }
-            /*check if the meal we want to modify exist and if the user and category related exists as well. We also check if 
-              there is an order parameter and if it's a valid one. If there is none, the order_fk is set to null */
-            if(mealExist && userExist && categoryExist && ((order_fk !== undefined && orderExist) || (order_fk === undefined))){
+
+            /*vérifie si le repas existe, si un utilisateur est précisé et qu'il existe ou pas d'utilisateur précicé,
+                si une catégorie est précisée et qu'elle existe ou pas de catégorie précicée,
+                si une commande est précisée et qu'elle existe ou pas de commande précicée
+            */
+            if(mealExist && 
+                ((userId !== undefined && userExist) || userId === undefined) && 
+                ((categoryId !== undefined && categoryExist) || categoryId === undefined) && 
+                ((order_fk !== undefined && orderExist) || (order_fk === undefined || orderId === null))){
                 await mealDB.updateMeal(client, mealId, name, description, portion_number, publication_date, userId, categoryId, orderId, imageFullURL);
                 if(image !== undefined) handleImageRemovingFromStorage(oldImageName, destFolderImages); //ne supprime l'ancienne image seulement si on recoit une nouvelle
                 res.sendStatus(204);
             }else{
                 if(!mealExist) res.status(404).json({error: "Repas introuvable"}); 
-                else if(!userExist) res.status(404).json({error: "Utilisateur introuvable"}); 
-                else if(!categoryExist) res.status(404).json({error: "Catégorie introuvable"}); 
+                else if(!userExist && userId !== undefined) res.status(404).json({error: "Utilisateur introuvable"}); 
+                else if(!categoryExist && categoryId !== undefined) res.status(404).json({error: "Catégorie introuvable"}); 
                 else if(!orderExist && order_fk !== undefined) res.status(404).json({error: "Commande introuvable"}); 
                 else res.sendStatus(404);
             }

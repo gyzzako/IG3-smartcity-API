@@ -124,7 +124,7 @@ router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustB
  *              description: Server error
  *
  */
-router.get("/:id", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, OrderController.getOrderById); //TODO: demander prof si on peut appaler méthode controller depuis middleware -> pour faire en sorte qu'un user puisse get que ses comamndes à lui
+router.get("/:id", JWTMiddleWare.identification, OrderController.getOrderById);
 
 /**
  * @swagger

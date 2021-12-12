@@ -1,10 +1,10 @@
 module.exports.createOrder = async (client, userId, orderDate) => {
     if(orderDate !== undefined){
         return await client.query(`
-        INSERT INTO "order"(order_date, user_fk) VALUES ($2, $1)`, [userId, orderDate]);
+        INSERT INTO "order"(order_date, user_fk) VALUES ($2, $1) RETURNING id`, [userId, orderDate]);
     }else{
         return await client.query(`
-        INSERT INTO "order"(order_date, user_fk) VALUES (NOW(), $1)`, [userId]);
+        INSERT INTO "order"(order_date, user_fk) VALUES (NOW(), $1) RETURNING id`, [userId]);
     }
 
 }

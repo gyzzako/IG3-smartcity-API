@@ -11,16 +11,53 @@ module.exports.createMeal = async (client, name, description, portionNumber, ima
 }
 
 module.exports.updateMeal = async (client, mealId, name, description, portionNumber, publicationDate, userId, categoryId, orderId, image) => {
-    if(orderId === undefined) orderId = null;
+    if(orderId == -1) orderId = null;
 
-    let params = [mealId, name, description, portionNumber, publicationDate, userId, categoryId, orderId];
-    let query = "UPDATE meal SET name = $2, description = $3, portion_number = $4, publication_date = $5, user_fk = $6, category_fk = $7, order_fk = $8";
+    const params = [];
+    const querySet = [];
+    let query = "UPDATE meal SET ";
+
+    if(name !== undefined && name !== ""){
+        params.push(name);
+        querySet.push(` name = $${params.length} `);
+    }
+    if(description !== undefined && description !== ""){
+        params.push(description);
+        querySet.push(` description = $${params.length} `);
+    }
+    if(portionNumber !== undefined && portionNumber !== ""){
+        params.push(portionNumber);
+        querySet.push(` portion_number = $${params.length} `);
+    }
+    if(publicationDate !== undefined && publicationDate !== ""){
+        params.push(publicationDate);
+        querySet.push(` publication_date = $${params.length} `);
+    }
+    if(userId !== undefined && userId !== ""){
+        params.push(userId);
+        querySet.push(` user_fk = $${params.length} `);
+    }
+    if(categoryId !== undefined && categoryId !== ""){
+        params.push(categoryId);
+        querySet.push(` category_fk = $${params.length} `);
+    }
+    if(orderId !== undefined && orderId !== ""){
+        params.push(orderId);
+        querySet.push(` order_fk = $${params.length} `);
+    }
     if(image !== undefined){
         params.push(image);
-        query += `, image = $${params.length}`;
+        querySet.push(` image = $${params.length} `);
     }
-    query += " where id = $1";
-    return await client.query(query, params);
+    if(params.length > 0){
+        query += querySet.join(',');
+        params.push(mealId);
+        query += ` WHERE id = $${params.length}`;
+
+        return client.query(query, params);
+    } else {
+        throw new Error("No field to update");
+    }
 }
 
 module.exports.getAllMeals = async (client, rowLimit, offset, searchElem) => {
