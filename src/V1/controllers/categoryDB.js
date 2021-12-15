@@ -176,10 +176,10 @@ module.exports.getCategoryCount = async (req, res) => {
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
     try{
         const {rows: counts} = await categoryDB.getCategoryCount(client, searchElem);
-        if(counts[0] !== undefined){
-            res.json(counts[0]);
-        }else{
+        if(counts === undefined || counts[0]?.count === undefined){
             res.sendStatus(404);
+        }else{
+            res.json(parseInt(counts[0].count));
         }
     }catch(e){
         console.error(e);
