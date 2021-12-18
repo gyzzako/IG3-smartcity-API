@@ -134,7 +134,6 @@ module.exports.updateCategory = async (req, res) => {
  *                          $ref: '#/components/schemas/Category'
  */
 module.exports.getAllCategories = async (req, res) => {
-    const client = await pool.connect();
     const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
     const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
@@ -143,6 +142,7 @@ module.exports.getAllCategories = async (req, res) => {
         (req.query.searchElem !== undefined && req.query.searchElem === ""))){
             res.sendStatus(400);
     }else{
+        const client = await pool.connect();
         try{
             const {rows: categories} = await categoryDB.getAllCategories(client, rowLimit, offset, searchElem);
             if(categories !== undefined){
@@ -201,12 +201,16 @@ module.exports.getCategoryCount = async (req, res) => {
  *                       $ref: '#/components/schemas/Category'
  */
 module.exports.getCategoryById = async (req, res) => {
-    const categoryId = req.params.id;
+    const categoryId = isNaN(req.params.id) ? undefined : parseInt(req.params.id);
     const client = await pool.connect();
     try{
-        const {rows: category} = await categoryDB.getCategoryById(client, categoryId);
-        if(category !== undefined){
-            res.json(category);
+        if(categoryId !== undefined){
+            const {rows: category} = await categoryDB.getCategoryById(client, categoryId);
+            if(category !== undefined){
+                res.json(category);
+            }else{
+                res.sendStatus(404);
+            }
         }else{
             res.sendStatus(404);
         }

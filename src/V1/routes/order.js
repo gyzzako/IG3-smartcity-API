@@ -116,8 +116,6 @@ router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustB
  *              $ref: '#/components/responses/ErrorJWT' 
  *          401:
  *              $ref: '#/components/responses/MissingJWT'
- *          403:
- *              $ref: '#/components/responses/mustBeAdmin'
  *          404:
  *              description: Order not found
  *          500:
@@ -187,11 +185,13 @@ router.patch("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAd
  *              $ref: '#/components/responses/mustBeAuthorizedOnRoute'
  *          404:
  *              description: Related references not found
+ *          409:
+ *              $ref: '#/components/responses/MealAlreadyTaken'
  *          500:
  *              description: Server error
  *
  */
-router.post("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAuthorizedOrderRoute, OrderController.insertOrder);
+router.post("/", JWTMiddleWare.identification, OrderController.insertOrder);
 
 /**
  * @swagger

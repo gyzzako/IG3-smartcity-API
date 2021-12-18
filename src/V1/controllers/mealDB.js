@@ -103,40 +103,45 @@ module.exports.insertMeal = async (req, res) => {
         portion_number === "" || categoryId === undefined || categoryId === "" || image === undefined){
             res.sendStatus(400);
     }else{
-        const client = await pool.connect();
-        try{
-            let imageFullURL;
-            if(image !== undefined){
-                let fullImageName = uuid.v4();
-                const imageFormat = await handleImageUploadingToStorage(image, fullImageName, destFolderImages);
-                fullImageName += "." + imageFormat;
-                imageFullURL = imageURL.concat(fullImageName);
+        const {id: activeUserId} = req.session;
+        if((req.session !== undefined && req.session.authLevel === "admin") || activeUserId === userId){
+            const client = await pool.connect();
+            try{
+                let imageFullURL;
+                if(image !== undefined){
+                    let fullImageName = uuid.v4();
+                    const imageFormat = await handleImageUploadingToStorage(image, fullImageName, destFolderImages);
+                    fullImageName += "." + imageFormat;
+                    imageFullURL = imageURL.concat(fullImageName);
+                }
+    
+                const promiseUserExist = userDB.userExistById(client, userId);
+                const promiseCategoryExist = categoryDB.categoryExistById(client, categoryId);
+                const promiseOrderExist = orderDB.orderExistById(client, order_fk);
+                const promiseValues = await Promise.all([promiseUserExist, promiseCategoryExist, promiseOrderExist]);
+                const userExist = promiseValues[0];
+                const categoryExist = promiseValues[1];
+                const orderExist = promiseValues[2];
+                const orderId = (order_fk !== undefined && orderExist) ? order_fk : null; //Sera soit l'id de la commande si il est correct ou null si rien n'est spécifié
+                
+                /*vérifie si l'utiliseur et la catégorie reliée existent. Vérification aussi si il y a une commande et si son id est valide.*/
+                if(userExist && categoryExist && ((order_fk !== undefined && orderExist) || (order_fk === undefined))){ 
+                    await mealDB.createMeal(client, name, description, portion_number, imageFullURL, userId, categoryId, orderId, publication_date);
+                    res.sendStatus(201);
+                }else{
+                    if(!userExist) res.status(404).json({error: "Utilisateur introuvable"}); 
+                    else if(!categoryExist) res.status(404).json({error: "Catégorie introuvable"}); 
+                    else if(!orderExist && order_fk !== undefined) res.status(404).json({error: "Commande introuvable"}); 
+                    else res.sendStatus(404);
+                }
+            }catch(e){
+                console.error(e);
+                res.sendStatus(500);
+            }finally{
+                client.release();
             }
-
-            const promiseUserExist = userDB.userExistById(client, userId);
-            const promiseCategoryExist = categoryDB.categoryExistById(client, categoryId);
-            const promiseOrderExist = orderDB.orderExistById(client, order_fk);
-            const promiseValues = await Promise.all([promiseUserExist, promiseCategoryExist, promiseOrderExist]);
-            const userExist = promiseValues[0];
-            const categoryExist = promiseValues[1];
-            const orderExist = promiseValues[2];
-            const orderId = (order_fk !== undefined && orderExist) ? order_fk : null; //Sera soit l'id de la commande si il est correct ou null si rien n'est spécifié
-            
-            /*vérifie si l'utiliseur et la catégorie reliée existent. Vérification aussi si il y a une commande et si son id est valide.*/
-            if(userExist && categoryExist && ((order_fk !== undefined && orderExist) || (order_fk === undefined))){ 
-                await mealDB.createMeal(client, name, description, portion_number, imageFullURL, userId, categoryId, orderId, publication_date);
-                res.sendStatus(201);
-            }else{
-                if(!userExist) res.status(404).json({error: "Utilisateur introuvable"}); 
-                else if(!categoryExist) res.status(404).json({error: "Catégorie introuvable"}); 
-                else if(!orderExist && order_fk !== undefined) res.status(404).json({error: "Commande introuvable"}); 
-                else res.sendStatus(404);
-            }
-        }catch(e){
-            console.error(e);
-            res.sendStatus(500);
-        }finally{
-            client.release();
+        }else{
+            res.sendStatus(403);
         }
     }
 }
@@ -257,7 +262,6 @@ module.exports.updateMeal = async (req, res) => {
  *                          $ref: '#/components/schemas/Meal'
  */
 module.exports.getAllMeals = async (req, res) => {
-    const client = await pool.connect();
     const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
     const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
@@ -266,6 +270,7 @@ module.exports.getAllMeals = async (req, res) => {
         (req.query.searchElem !== undefined && req.query.searchElem === "")){
             res.sendStatus(400);
     }else{
+        const client = await pool.connect();
         try{
             const {rows: meals} = await mealDB.getAllMeals(client, rowLimit, offset, searchElem);
             if(meals !== undefined){
@@ -336,24 +341,28 @@ module.exports.getMealsCount = async (req, res) => {
  *                       $ref: '#/components/schemas/Meal'
  */
 module.exports.getMealById = async (req, res) => {
-    const mealId = req.params.id;
+    const mealId = isNaN(req.params.id) ? undefined : parseInt(req.params.id);
     const client = await pool.connect();
     try{
-        const {rows: meals} = await mealDB.getMealById(client, mealId);
-        const meal = meals[0] !== undefined ? meals[0] : undefined;
-        if(meal !== undefined){
-            let category = {}
-            category.id = meal.category_id;
-            category.name = meal.category_name;
-
-            meal.category = category;
-            delete meal.category_fk;
-            delete meal.category_id
-            delete meal.category_name
-            res.json(meal);
+        if(mealId !== undefined){
+            const {rows: meals} = await mealDB.getMealById(client, mealId);
+            const meal = meals[0] !== undefined ? meals[0] : undefined;
+            if(meal !== undefined){
+                let category = {}
+                category.id = meal.category_id;
+                category.name = meal.category_name;
+    
+                meal.category = category;
+                delete meal.category_fk;
+                delete meal.category_id
+                delete meal.category_name
+                res.json(meal);
+            }else{
+                res.sendStatus(404);
+            }
         }else{
             res.sendStatus(404);
-        }
+        }   
     }catch(e){
         console.error(e);
         res.sendStatus(500);

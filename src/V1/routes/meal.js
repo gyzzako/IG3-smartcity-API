@@ -200,7 +200,7 @@ router.patch("/", JWTMiddleWare.identification, upload.fields([
  */
 router.post('/', JWTMiddleWare.identification, upload.fields([
 {name: 'image', maxCount: 1}
-]), AuthorizationMiddleware.mustBeAuthorizedMealRoute, mealController.insertMeal);
+]), mealController.insertMeal);
 
 /**
  * @swagger

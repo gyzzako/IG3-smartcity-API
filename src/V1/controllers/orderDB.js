@@ -31,6 +31,8 @@ const mealDB = require('../models/mealDB');
  *  responses:
  *      OrderAdded:
  *          description: The order has been added
+ *      MealAlreadyTaken:
+ *          description: A meal you want to take is already taken
  *  requestBodies:
  *      OrderToAdd:
  *          content:
@@ -55,47 +57,66 @@ const mealDB = require('../models/mealDB');
  *                          - user
  */
 module.exports.insertOrder = async (req, res) => {
-    const {user, order_date, meals_id: meals} = req.body;
+    const {user, order_date, meals_id: mealsId} = req.body;
     if(user?.id === undefined || user?.id === ""){
         res.sendStatus(400);
     }else{
-        const client = await pool.connect();
-        try{
-            await client.query("BEGIN;");
-            const userExist = await userDB.userExistById(client, user.id);
-            if(userExist){
-                const orderResponse = await orderDB.createOrder(client, user.id, order_date);
-                let promises = [];
-                if(meals !== undefined && meals[0] !== undefined){
-                    meals.forEach(mealData =>{
-                        promises.push(mealDB.updateMeal(client, mealData.id, undefined, undefined, undefined, undefined, undefined, undefined, orderResponse.rows[0].id, undefined));            
-                    })
-                }
-                const response = await Promise.all(promises);
-                let i = 0;
-                let areMealsUpdated = true;
-                while(i < response.length && areMealsUpdated){
-                    if(response[i].rowCount !== 1) areMealsUpdated = false;
-                    i++;
-                }
-                if((meals === undefined || (meals[0] !== undefined && response[0] !== undefined)) && areMealsUpdated){ //pour pouvoir créer une commande avec rien ou avec les repas
-                    await client.query("COMMIT");
-                    res.sendStatus(201);
+        const {id: activeUserId} = req.session;
+        if((req.session !== undefined && req.session.authLevel === "admin") || activeUserId === user.id){
+            const client = await pool.connect();
+            try{
+                await client.query("BEGIN;");
+                const userExist = await userDB.userExistById(client, user.id);
+                if(userExist){
+                    const orderResponse = await orderDB.createOrder(client, user.id, order_date);
+                    let promises = [];
+                    if(mealsId !== undefined && mealsId[0] !== undefined){
+                        for(mealData of mealsId){
+                            const {rows: meal} = await mealDB.getMealById(client, mealData.id);
+                            const isMealAlreadyTaken = meal[0] !== undefined && meal[0].order_fk !== null && meal[0].order_fk !== undefined && meal[0].order_fk !== "" ? true : false;
+                            if(!isMealAlreadyTaken){
+                                promises.push(mealDB.updateMeal(client, mealData.id, undefined, undefined, undefined, undefined, undefined, undefined, orderResponse.rows[0].id, undefined));            
+                            }
+                        }
+                    }
+                    const response = await Promise.all(promises);
+                    if(response.length > 0){ //check si des plats ont été modifiés ou pas
+                        let i = 0;
+                        let areMealsUpdated = true;
+                        while(i < response.length && areMealsUpdated){
+                            if(response[i].rowCount !== 1) areMealsUpdated = false;
+                            i++;
+                        }
+                        if((mealsId === undefined || (mealsId[0] !== undefined && response[0] !== undefined)) && areMealsUpdated){ //pour pouvoir créer une commande avec rien ou avec les repas
+                            await client.query("COMMIT");
+                            res.sendStatus(201);
+                        }else{
+                            await client.query("ROLLBACK");
+                            res.status(404).json({error: "Repas introuvable"});
+                        }
+                    }else{
+                        if(mealsId === undefined || (mealsId !== undefined && mealsId.length === promises.length)){ //pour pouvoir créer une commande avec rien ou avec les repas
+                            await client.query("COMMIT");
+                            res.sendStatus(201);
+                        }else{
+                            await client.query("ROLLBACK");
+                            res.status(409).json({error: "Repas déjà pris"});
+                        }
+                    }
                 }else{
                     await client.query("ROLLBACK");
-                    res.status(404).json({error: "Repas introuvable"});
+                    if(!userExist) res.status(404).json({error: "Utilisateur introuvable"});
+                    else res.sendStatus(404);
                 }
-            }else{
-                await client.query("ROLLBACK");
-                if(!userExist) res.status(404).json({error: "Utilisateur introuvable"});
-                else res.sendStatus(404);
+            }catch(e){
+                await client.query("ROLLBACK;");
+                console.error(e);
+                res.sendStatus(500);
+            }finally{
+                client.release();
             }
-        }catch(e){
-            await client.query("ROLLBACK;");
-            console.error(e);
-            res.sendStatus(500);
-        }finally{
-            client.release();
+        }else{
+            res.sendStatus(403);
         }
     }
 }
@@ -239,12 +260,16 @@ module.exports.getOrdersCount = async (req, res) => {
  *                       $ref: '#/components/schemas/Order'
  */
 module.exports.getOrderById = async (req, res) => {
-    const orderId = req.params.id;
+    const orderId = isNaN(req.params.id) ? undefined : parseInt(req.params.id);
     const client = await pool.connect();
     try{
-        const {rows: order} = await orderDB.getOrderById(client, orderId);
-        if(order !== undefined){
-            res.json(order);
+        if(orderId !== undefined){
+            const {rows: order} = await orderDB.getOrderById(client, orderId);
+            if(order !== undefined){
+                res.json(order);
+            }else{
+                res.sendStatus(404);
+            }
         }else{
             res.sendStatus(404);
         }

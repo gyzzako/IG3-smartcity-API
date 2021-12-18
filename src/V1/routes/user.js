@@ -146,7 +146,7 @@ router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustB
  *              description: Server error
  *
  */
-router.get("/:id", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAuthorizedUserRoute, UserController.getUserById);
+router.get("/:id", JWTMiddleWare.identification, UserController.getUserById);
 
 
 /**
@@ -182,7 +182,7 @@ router.get("/:id", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeA
  *              description: Server error
  *
  */
-router.patch("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAuthorizedUserRoute, UserController.updateUser);
+router.patch("/", JWTMiddleWare.identification, UserController.updateUser);
 
 /**
  * @swagger

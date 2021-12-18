@@ -1,7 +1,6 @@
 const pool = require('../models/database');
 const userDB = require('../models/userDB');
 const jwt = require('jsonwebtoken');
-const {getHash} = require('../utils/utils');
 
 /**
  * @swagger
@@ -82,6 +81,14 @@ const {getHash} = require('../utils/utils');
  *                          street_and_number:
  *                              type: string
  *                              description: Street and number where the user lives
+ *                      required:
+ *                          - firstname
+ *                          - lastname
+ *                          - username
+ *                          - password
+ *                          - province
+ *                          - city
+ *                          - street_and_number
  */
 module.exports.insertUser = async (req, res) => {
     const {firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number} =  req.body;
@@ -94,9 +101,8 @@ module.exports.insertUser = async (req, res) => {
         try{
             const userExist = await userDB.userExistByUsername(client, username);
             if(!userExist){
-                const hashedPassword = await getHash(password);
                 const isAdmin = is_admin === undefined || is_admin === null || is_admin === "" ? false : is_admin;
-                await userDB.createUser(client, firstname, lastname, phone_number, username, hashedPassword, isAdmin, province, city, street_and_number);
+                await userDB.createUser(client, firstname, lastname, phone_number, username, password, isAdmin, province, city, street_and_number);
                 res.sendStatus(201);
             }else{
                 res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
@@ -121,40 +127,71 @@ module.exports.insertUser = async (req, res) => {
  *          content:
  *              application/json:
  *                  schema:
- *                      $ref: '#/components/schemas/User'
+ *                      type: object
+ *                      properties:
+ *                          id:
+ *                              type: integer
+ *                          firstname:
+ *                              type: string
+ *                              description: User's firstname
+ *                          lastname:
+ *                              type: string
+ *                              description: User's lastname
+ *                          username:
+ *                              type: string
+ *                              description: Username of the user
+ *                          password:
+ *                              type: string
+ *                              description: Hashed password of the user
+ *                          is_admin:
+ *                              type: boolean
+ *                              description: Determine if a user if an administrator or not
+ *                          province:
+ *                              type: string
+ *                              description: Province where the user lives
+ *                          city:
+ *                              type: string
+ *                              description: City where the user lives
+ *                          street_and_number:
+ *                              type: string
+ *                              description: Street and number where the user lives
+ *                      required:
+ *                          - id
  */
 module.exports.updateUser = async (req, res) => {
     const {id: userId, firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number} = req.body;
-    if(firstname === undefined || firstname === "" || lastname === undefined || lastname === "" || phone_number === undefined || phone_number === "" ||
-        username === undefined || username === "" || password === undefined || password === "" || province === undefined || province === "" ||
-        city === undefined || city === "" || street_and_number === undefined || street_and_number === ""){ 
+    if(userId === undefined || userId === ""){ 
              res.sendStatus(400);
     }else{
-        const client = await pool.connect();
-        try{
-            const promiseUserToModify = userDB.getUserById(client, userId); //utilisateur à modofier avec l'id du body
-            const promiseUser = userDB.getUserByUsername(client, username); //vérifié si un utilisateur existe avec le pseudo dans le body
-            const promiseValue = await Promise.all([promiseUserToModify, promiseUser]);
-            const userToModify = promiseValue[0].rows[0] !== undefined ? promiseValue[0].rows[0] : undefined; 
-            const user = promiseValue[1].rows[0] !== undefined ? promiseValue[1].rows[0] : undefined; 
-            
-            if(userToModify === undefined){
-                res.status(404).json({error: "Utilisateur introuvable"});
-            }else{
-                if(!user || username === userToModify.username){ //si un utilisateur avec le nouveau pseudo ou si c'est le même qu'avant
-                    const hashedPassword = await getHash(password);
-                    await userDB.updateUser(client, userId, firstname, lastname, phone_number, username, hashedPassword, is_admin, province, city, street_and_number);
-                    res.sendStatus(204);
+        const {id: activeUserId} = req.session;
+        if((req.session !== undefined && req.session.authLevel === "admin") || activeUserId === userId){
+            if(req.session.authLevel !== "admin") req.body.is_admin = false; // pour ne pas qu'un client puisse se changer en admin
+            const client = await pool.connect();
+            try{
+                const promiseUserToModify = userDB.getUserById(client, userId); //utilisateur à modifier avec l'id du body
+                const promiseUserExist = userDB.userExistByUsername(client, username); //vérifié si un utilisateur existe avec le pseudo dans le body
+                const promiseValue = await Promise.all([promiseUserToModify, promiseUserExist]);
+                const userToModify = promiseValue[0].rows[0] !== undefined ? promiseValue[0].rows[0] : undefined; 
+                const userExist = promiseValue[1]; 
+                if(userToModify === undefined){
+                    res.status(404).json({error: "Utilisateur introuvable"});
                 }else{
-                    res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
+                    if(!userExist || username === userToModify.username){ //si un utilisateur avec le nouveau pseudo ou si c'est le même qu'avant
+                        await userDB.updateUser(client, userId, firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number);
+                        res.sendStatus(204);
+                    }else{
+                        res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
+                    }
                 }
-            }
-        }catch(e){
-            console.error(e);
-            res.sendStatus(500);
-        }finally{
-            client.release();
-        } 
+            }catch(e){
+                console.error(e);
+                res.sendStatus(500);
+            }finally{
+                client.release();
+            } 
+        }else{
+            res.sendStatus(403);
+        }
     }
 }
 
@@ -172,7 +209,6 @@ module.exports.updateUser = async (req, res) => {
  *                          $ref: '#/components/schemas/User'
  */
 module.exports.getAllUsers = async (req, res) => {
-    const client = await pool.connect();
     const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
     const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
@@ -181,6 +217,7 @@ module.exports.getAllUsers = async (req, res) => {
         (req.query.searchElem !== undefined && req.query.searchElem === "")){
             res.sendStatus(404);
     }else{
+        const client = await pool.connect();
         try{
             const {rows: users} = await userDB.getAllUsers(client, rowLimit, offset, searchElem);
             if(users !== undefined){
@@ -238,20 +275,29 @@ module.exports.getUsersCount = async (req, res) => {
  *                       $ref: '#/components/schemas/User'
  */
 module.exports.getUserById = async (req, res) => {
-    const userId = req.params.id;
-    const client = await pool.connect();
-    try{
-        const {rows: user} = await userDB.getUserById(client, userId);
-        if(user !== undefined){
-            res.json(user);
-        }else{
-            res.sendStatus(404);
+    const {id: activeUserId} = req.session;
+    const userId = isNaN(req.params.id) ? undefined : parseInt(req.params.id);
+    if((req.session !== undefined && req.session.authLevel === "admin") || activeUserId === userId){
+        const client = await pool.connect();
+        try{
+            if(userId !== undefined){
+                const {rows: user} = await userDB.getUserById(client, userId);
+                if(user !== undefined){
+                    res.json(user);
+                }else{
+                   
+                }
+            }else{
+                res.sendStatus(404);
+            } 
+        }catch(e){
+            console.error(e);
+            res.sendStatus(500);
+        }finally{
+            client.release();
         }
-    }catch(e){
-        console.error(e);
-        res.sendStatus(500);
-    }finally{
-        client.release();
+    }else{
+        res.sendStatus(403);
     }
 }
 
