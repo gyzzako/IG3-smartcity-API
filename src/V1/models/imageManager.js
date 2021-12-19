@@ -29,7 +29,6 @@ module.exports.handleImageUploadingToStorage = async (imageFile, imageName, dest
 }
 
 module.exports.handleImageRemovingFromStorage = async(imageName, destFolderImages) => {
-    console.log(imageName)
     if(imageName !== undefined && imageName !== null && imageName !== "null"){
        try{
         await fsPromise.unlink(destFolderImages + "/" + imageName);

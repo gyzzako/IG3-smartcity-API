@@ -7,7 +7,6 @@ const uuid = require('uuid');
 const {handleImageUploadingToStorage, handleImageRemovingFromStorage} = require('../models/imageManager');
 
 const destFolderImages = "./src/V1/upload/mealImages";
-const imageURL = "http://localhost:3001/mealimages/";
 
 /**
  * @swagger
@@ -107,12 +106,11 @@ module.exports.insertMeal = async (req, res) => {
         if((req.session !== undefined && req.session.authLevel === "admin") || activeUserId === userId){
             const client = await pool.connect();
             try{
-                let imageFullURL;
+                let fullImageName
                 if(image !== undefined){
-                    let fullImageName = uuid.v4();
+                    fullImageName = uuid.v4();
                     const imageFormat = await handleImageUploadingToStorage(image, fullImageName, destFolderImages);
                     fullImageName += "." + imageFormat;
-                    imageFullURL = imageURL.concat(fullImageName);
                 }
     
                 const promiseUserExist = userDB.userExistById(client, userId);
@@ -126,7 +124,7 @@ module.exports.insertMeal = async (req, res) => {
                 
                 /*vérifie si l'utiliseur et la catégorie reliée existent. Vérification aussi si il y a une commande et si son id est valide.*/
                 if(userExist && categoryExist && ((order_fk !== undefined && orderExist) || (order_fk === undefined))){ 
-                    await mealDB.createMeal(client, name, description, portion_number, imageFullURL, userId, categoryId, orderId, publication_date);
+                    await mealDB.createMeal(client, name, description, portion_number, fullImageName, userId, categoryId, orderId, publication_date);
                     res.sendStatus(201);
                 }else{
                     if(!userExist) res.status(404).json({error: "Utilisateur introuvable"}); 
@@ -198,12 +196,11 @@ module.exports.updateMeal = async (req, res) => {
     }else{
         const client = await pool.connect();
         try{
-            let imageFullURL;
+            let fullImageName
             if(image !== undefined){
-                let fullImageName = uuid.v4();
+                fullImageName = uuid.v4();
                 const imageFormat = await handleImageUploadingToStorage(image, fullImageName, destFolderImages);
                 fullImageName += "." + imageFormat;
-                imageFullURL = imageURL.concat(fullImageName);
             }
             
             const promiseMealExist = mealDB.mealExistById(client, mealId);
@@ -228,12 +225,8 @@ module.exports.updateMeal = async (req, res) => {
                 ((userId !== undefined && userExist) || userId === undefined) && 
                 ((categoryId !== undefined && categoryExist) || categoryId === undefined) && 
                 ((order_fk !== undefined && orderExist) || (order_fk === undefined || orderId === null))){
-                await mealDB.updateMeal(client, mealId, name, description, portion_number, publication_date, userId, categoryId, orderId, imageFullURL);
-                if(image !== undefined){
-                    const temp = oldImageName.split("/");
-                    const imageFileName = temp[temp.length-1];
-                    await handleImageRemovingFromStorage(imageFileName, destFolderImages); //ne supprime l'ancienne image seulement si on recoit une nouvelle
-                }
+                await mealDB.updateMeal(client, mealId, name, description, portion_number, publication_date, userId, categoryId, orderId, fullImageName);
+                if(image !== undefined) await handleImageRemovingFromStorage(oldImageName, destFolderImages); //ne supprime l'ancienne image seulement si on recoit une nouvelle
                 res.sendStatus(204);
             }else{
                 if(!mealExist) res.status(404).json({error: "Repas introuvable"}); 
@@ -404,9 +397,7 @@ module.exports.deleteMeal = async (req, res) => {
         const response = await mealDB.deleteMealById(client, id);
         if(response.rowCount > 0){
             if(imageName !== undefined){
-                const temp =  imageName.split("/");
-                const imageFileName = temp[temp.length-1];
-                handleImageRemovingFromStorage(imageFileName, destFolderImages);
+                handleImageRemovingFromStorage(imageName, destFolderImages);
             }
             res.sendStatus(204);
         }else{
