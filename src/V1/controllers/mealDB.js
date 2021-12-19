@@ -229,7 +229,11 @@ module.exports.updateMeal = async (req, res) => {
                 ((categoryId !== undefined && categoryExist) || categoryId === undefined) && 
                 ((order_fk !== undefined && orderExist) || (order_fk === undefined || orderId === null))){
                 await mealDB.updateMeal(client, mealId, name, description, portion_number, publication_date, userId, categoryId, orderId, imageFullURL);
-                if(image !== undefined) handleImageRemovingFromStorage(oldImageName, destFolderImages); //ne supprime l'ancienne image seulement si on recoit une nouvelle
+                if(image !== undefined){
+                    const temp = oldImageName.split("/");
+                    const imageFileName = temp[temp.length-1];
+                    await handleImageRemovingFromStorage(imageFileName, destFolderImages); //ne supprime l'ancienne image seulement si on recoit une nouvelle
+                }
                 res.sendStatus(204);
             }else{
                 if(!mealExist) res.status(404).json({error: "Repas introuvable"}); 

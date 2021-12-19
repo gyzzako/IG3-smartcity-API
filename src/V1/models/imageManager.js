@@ -1,5 +1,6 @@
 const sharp = require('sharp');
 const fs = require('fs');
+const fsPromise = fs.promises;
 
 function saveImage(imageBuffer, imageName, destFolder){
     return sharp(imageBuffer)
@@ -28,14 +29,12 @@ module.exports.handleImageUploadingToStorage = async (imageFile, imageName, dest
 }
 
 module.exports.handleImageRemovingFromStorage = async(imageName, destFolderImages) => {
+    console.log(imageName)
     if(imageName !== undefined && imageName !== null && imageName !== "null"){
-        fs.stat(destFolderImages, function (err, stats) {     
-            if(err) {
-                return console.error(err);
-            }
-            fs.unlink(destFolderImages + "/" + imageName, function(err){
-                 if(err) return console.error(err);
-            });  
-         });
+       try{
+        await fsPromise.unlink(destFolderImages + "/" + imageName);
+       }catch(e){
+           console.error(e);
+       }
     }
 }
