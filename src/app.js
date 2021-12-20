@@ -3,7 +3,7 @@ const cors = require('cors')
 const Router = require('./V1/routes');
 const express = require('express');
 const app = express();
-const port = 3001;
+const port = process.env.PORT ?? 3001; //pour le port de heroku ou celui que nous choisissons pour localhost
 
 app.use(cors());
 app.use(express.static('./src/V1/upload'));
