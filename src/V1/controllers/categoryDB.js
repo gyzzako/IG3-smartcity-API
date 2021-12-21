@@ -89,7 +89,7 @@ module.exports.insertCategory = async (req, res) => {
  */
 module.exports.updateCategory = async (req, res) => {
     const {id: categoryId, name} = req.body;
-    if(name === undefined || name === "" || categoryId === undefined || categoryId === ""){
+    if(name === undefined || name === "" || categoryId === undefined || categoryId === "" || isNaN(categoryId)){
         res.sendStatus(400);
     }else{
         const client = await pool.connect();
@@ -134,12 +134,12 @@ module.exports.updateCategory = async (req, res) => {
  *                          $ref: '#/components/schemas/Category'
  */
 module.exports.getAllCategories = async (req, res) => {
-    const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
-    const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
+    const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" && !isNaN(req.query.rowLimit) ? parseInt(req.query.rowLimit) : undefined;
+    const offset = req.query.offset !== undefined && req.query.offset !== "" && !isNaN(req.query.offset) ? parseInt(req.query.offset) : undefined;
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
 
-    if((req.query.rowLimit !== undefined && req.query.rowLimit === "") || (req.query.offset !== undefined && req.query.offset === "" ||
-        (req.query.searchElem !== undefined && req.query.searchElem === ""))){
+    if((req.query.rowLimit !== undefined && (req.query.rowLimit === "" || isNaN(req.query.rowLimit))) || (req.query.offset !== undefined && (req.query.offset === "" || isNaN(req.query.offset))) || 
+        (req.query.searchElem !== undefined && req.query.searchElem === "")){
             res.sendStatus(400);
     }else{
         const client = await pool.connect();

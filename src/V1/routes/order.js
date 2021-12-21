@@ -84,15 +84,13 @@ router.get("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmi
  *                              - $ref: '#/components/responses/OrderBadParams'
  *          401:
  *              $ref: '#/components/responses/MissingJWT'
- *          403:
- *              $ref: '#/components/responses/mustBeAdmin'
  *          404:
  *              description: Not found
  *          500:
  *              description: Server error
  *
  */
-router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, OrderController.getOrdersCount);
+router.get("/count", JWTMiddleWare.identification, OrderController.getOrdersCount);
 
 /**
  * @swagger
@@ -191,7 +189,7 @@ router.patch("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAd
  *              description: Server error
  *
  */
-router.post("/", JWTMiddleWare.identification, OrderController.insertOrder);
+router.post("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAuthorizedToCreateOrder, OrderController.insertOrder);
 
 /**
  * @swagger

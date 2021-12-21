@@ -88,7 +88,6 @@ const destFolderImages = "./src/V1/upload/mealImages";
  *                              type: object
  *                              description: Image bytes
  *                      required:
- *                          - id
  *                          - name
  *                          - description
  *                          - portion_number
@@ -98,48 +97,46 @@ const destFolderImages = "./src/V1/upload/mealImages";
 module.exports.insertMeal = async (req, res) => {
     const {user_fk: userId, name, description, portion_number, category_fk: categoryId, order_fk, publication_date} = req.body;
     const image = req.files?.image[0];
-    if(userId === undefined || userId === "" || name === undefined || name === "" || description === undefined || description === "" || portion_number === undefined || 
-        portion_number === "" || categoryId === undefined || categoryId === "" || image === undefined){
-            res.sendStatus(400);
+    /* le check de l'userID est fait dans le middleware authorization*/
+    if(name === undefined || name === "" || description === undefined || description === "" || portion_number === undefined || 
+        portion_number === "" || isNaN(portion_number) || categoryId === undefined || categoryId === "" || isNaN(categoryId) ||
+        (order_fk !== undefined && (order_fk === "" || isNaN(order_fk))) || image === undefined){
+            res.sendStatus(400);    
     }else{
-        const {id: activeUserId} = req.session;
-        if((req.session !== undefined && req.session.authLevel === "admin") || activeUserId === userId){
-            const client = await pool.connect();
-            try{
-                let fullImageName
-                if(image !== undefined){
-                    fullImageName = uuid.v4();
-                    const imageFormat = await handleImageUploadingToStorage(image, fullImageName, destFolderImages);
-                    fullImageName += "." + imageFormat;
-                }
-    
-                const promiseUserExist = userDB.userExistById(client, userId);
-                const promiseCategoryExist = categoryDB.categoryExistById(client, categoryId);
-                const promiseOrderExist = orderDB.orderExistById(client, order_fk);
-                const promiseValues = await Promise.all([promiseUserExist, promiseCategoryExist, promiseOrderExist]);
-                const userExist = promiseValues[0];
-                const categoryExist = promiseValues[1];
-                const orderExist = promiseValues[2];
-                const orderId = (order_fk !== undefined && orderExist) ? order_fk : null; //Sera soit l'id de la commande si il est correct ou null si rien n'est spécifié
-                
-                /*vérifie si l'utiliseur et la catégorie reliée existent. Vérification aussi si il y a une commande et si son id est valide.*/
-                if(userExist && categoryExist && ((order_fk !== undefined && orderExist) || (order_fk === undefined))){ 
-                    await mealDB.createMeal(client, name, description, portion_number, fullImageName, userId, categoryId, orderId, publication_date);
-                    res.sendStatus(201);
-                }else{
-                    if(!userExist) res.status(404).json({error: "Utilisateur introuvable"}); 
-                    else if(!categoryExist) res.status(404).json({error: "Catégorie introuvable"}); 
-                    else if(!orderExist && order_fk !== undefined) res.status(404).json({error: "Commande introuvable"}); 
-                    else res.sendStatus(404);
-                }
-            }catch(e){
-                console.error(e);
-                res.sendStatus(500);
-            }finally{
-                client.release();
+        const client = await pool.connect();
+        try {
+            let fullImageName
+            if (image !== undefined) {
+                fullImageName = uuid.v4();
+                const imageFormat = await handleImageUploadingToStorage(image, fullImageName, destFolderImages);
+                fullImageName += "." + imageFormat;
             }
-        }else{
-            res.sendStatus(403);
+
+            const promises = [];
+            promises.push(userDB.userExistById(client, userId));
+            promises.push(categoryDB.categoryExistById(client, categoryId));
+            if(order_fk !== undefined) promises.push(orderDB.orderExistById(client, order_fk));
+            const promiseValues = await Promise.all(promises);
+            const userExist = promiseValues[0];
+            const categoryExist = promiseValues[1];
+            const orderExist = promiseValues[2];
+            const orderId = orderExist ? order_fk : null; //Sera soit l'id de la commande si il est correct ou null si rien n'est spécifié
+
+            /*vérifie si l'utiliseur et la catégorie reliée existent. Vérification aussi si il y a une commande et si son id est valide.*/
+            if (userExist && categoryExist && ((order_fk !== undefined && orderExist) || (order_fk === undefined))) {
+                await mealDB.createMeal(client, name, description, portion_number, fullImageName, userId, categoryId, orderId, publication_date);
+                res.sendStatus(201);
+            } else {
+                if (!userExist) res.status(404).json({ error: "Utilisateur introuvable" });
+                else if (!categoryExist) res.status(404).json({ error: "Catégorie introuvable" });
+                else if (!orderExist && order_fk !== undefined) res.status(404).json({ error: "Commande introuvable" });
+                else res.sendStatus(404);
+            }
+        } catch (e) {
+            console.error(e);
+            res.sendStatus(500);
+        } finally {
+            client.release();
         }
     }
 }
@@ -191,7 +188,8 @@ module.exports.updateMeal = async (req, res) => {
     const {id: mealId, user_fk: userId, name, description, portion_number, publication_date, category_fk: categoryId, order_fk, oldImageName} = req.body;
     const images = req.files?.image;
     const image = images !== undefined ? images[0] : undefined;
-    if(mealId === undefined || mealId === ""){
+    if(mealId === undefined || mealId === "" || (portion_number !== undefined && (portion_number === "" || isNaN(portion_number))) || (categoryId !== undefined && (categoryId === "" || isNaN(categoryId))) || 
+    (order_fk !== undefined && (order_fk === "" || isNaN(order_fk)))){
             res.sendStatus(400);
     }else{
         const client = await pool.connect();
@@ -203,23 +201,22 @@ module.exports.updateMeal = async (req, res) => {
                 fullImageName += "." + imageFormat;
             }
             
-            const promiseMealExist = mealDB.mealExistById(client, mealId);
-            const promiseUserExist = userDB.userExistById(client, userId);
-            const promiseCategoryExist = categoryDB.categoryExistById(client, categoryId)
-            const promiseValue = await Promise.all([promiseMealExist, promiseUserExist, promiseCategoryExist]);
+            const promises = [];
+            promises.push(mealDB.mealExistById(client, mealId));
+            promises.push(userDB.userExistById(client, userId));
+            promises.push(categoryDB.categoryExistById(client, categoryId));
+            if(order_fk !== undefined)  promises.push(orderDB.orderExistById(client, order_fk));
+            const promiseValue = await Promise.all(promises);
             const mealExist = promiseValue[0];
             const userExist = promiseValue[1];
             const categoryExist = promiseValue[2];
-            let orderExist, orderId;
-            if(order_fk !== undefined && order_fk !== null){
-                orderExist = await orderDB.orderExistById(client, order_fk);
-                orderId = orderExist ? order_fk : undefined; //sera soit l'id de la commande si il y a correspondance ou undefined si rien n'est précisé dans le body
-                if(order_fk == -1) orderId = null;
-            }
+            const orderExist = promiseValue[3];
+            const orderId = orderExist ? order_fk : undefined; //sera soit l'id de la commande si il y a correspondance ou undefined si rien n'est précisé dans le body
+            if(order_fk == -1) orderId = null; // pour supprimer une commande d'un repas
 
-            /*vérifie si le repas existe, si un utilisateur est précisé et qu'il existe ou pas d'utilisateur précicé,
-                si une catégorie est précisée et qu'elle existe ou pas de catégorie précicée,
-                si une commande est précisée et qu'elle existe ou pas de commande précicée
+            /*vérifie si le repas existe, si un utilisateur est précisé et qu'il existe ou pas d'utilisateur précisé,
+                si une catégorie est précisée et qu'elle existe ou pas de catégorie précisée,
+                si une commande est précisée et qu'elle existe ou pas de commande précisée
             */
             if(mealExist && 
                 ((userId !== undefined && userExist) || userId === undefined) && 
@@ -263,7 +260,7 @@ module.exports.getAllMeals = async (req, res) => {
     const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
 
-    if((req.query.rowLimit !== undefined && req.query.rowLimit === "") || (req.query.offset !== undefined && req.query.offset === "") ||
+    if((req.query.rowLimit !== undefined && (req.query.rowLimit === "" || isNaN(req.query.rowLimit))) || (req.query.offset !== undefined && (req.query.offset === "" || isNaN(req.query.offset))) ||
         (req.query.searchElem !== undefined && req.query.searchElem === "")){
             res.sendStatus(400);
     }else{

@@ -61,7 +61,7 @@ module.exports.updateMeal = async (client, mealId, name, description, portionNum
 }
 
 module.exports.getAllMeals = async (client, rowLimit, offset, searchElem) => {
-    let params = [];
+    const params = [];
     let query = `SELECT *, TO_CHAR(meal.publication_date::DATE, 'dd-mm-yyyy') as publication_date, meal.id as id, meal.name as name,
                 category.id as category_id, category.name as category_name FROM meal LEFT JOIN category ON (meal.category_fk = category.id)`;
 

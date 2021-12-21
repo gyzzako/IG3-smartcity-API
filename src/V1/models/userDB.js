@@ -67,7 +67,7 @@ module.exports.updateUser = async (client, userId, firstname, lastname, phoneNum
 }
 
 module.exports.getAllUsers = async (client, rowLimit, offset, searchElem) => {
-    let params = [];
+    const params = [];
     let query = `SELECT id, firstname, lastname, phone_number, username, isAdmin, province, city, street_and_number FROM "user"`;
 
     if(searchElem !== undefined){

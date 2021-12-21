@@ -91,15 +91,13 @@ router.get("/", JWTMiddleWare.identification, mealController.getAllMeals);
  *                              - $ref: '#/components/responses/MealBadParams'
  *          401:
  *              $ref: '#/components/responses/MissingJWT'
- *          403:
- *              $ref: '#/components/responses/mustBeAdmin'
  *          404:
  *              description: Not found
  *          500:
  *              description: Server error
  *
  */
-router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, mealController.getMealsCount);
+router.get("/count", JWTMiddleWare.identification, mealController.getMealsCount);
 
 /**
  * @swagger
@@ -200,7 +198,7 @@ router.patch("/", JWTMiddleWare.identification, upload.fields([
  */
 router.post('/', JWTMiddleWare.identification, upload.fields([
 {name: 'image', maxCount: 1}
-]), mealController.insertMeal);
+]), AuthorizationMiddleware.mustBeAuthorizedToCreateMeal, mealController.insertMeal);
 
 /**
  * @swagger

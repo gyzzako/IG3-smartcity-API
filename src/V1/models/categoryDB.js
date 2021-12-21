@@ -9,7 +9,7 @@ module.exports.updateCategory = async (client, categoryId, name) => {
 }
 
 module.exports.getAllCategories = async (client, rowLimit, offset, searchElem) => {
-    let params = [];
+    const params = [];
     let query = `SELECT * FROM category`;
 
     if(searchElem !== undefined){

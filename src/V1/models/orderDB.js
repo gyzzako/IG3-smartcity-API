@@ -16,7 +16,7 @@ module.exports.updateOrder = async (client, orderId, orderDate, userId) => {
 }
 
 module.exports.getAllOrders = async (client, rowLimit, offset, searchElem) => {
-    let params = [];
+    const params = [];
     let query = `SELECT *, TO_CHAR(order_date::DATE, 'dd-mm-yyyy') as order_date FROM "order"`;
 
     if(searchElem !== undefined){

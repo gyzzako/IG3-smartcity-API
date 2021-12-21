@@ -81,15 +81,13 @@ router.get("/",JWTMiddleWare.identification, categoryController.getAllCategories
  *                              - $ref: '#/components/responses/CategoryBadParams'
  *          401:
  *              $ref: '#/components/responses/MissingJWT'
- *          403:
- *              $ref: '#/components/responses/mustBeAdmin'
  *          404:
  *              description: Not found
  *          500:
  *              description: Server error
  *
  */
-router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, categoryController.getCategoryCount);
+router.get("/count", JWTMiddleWare.identification, categoryController.getCategoryCount);
 
 /**
  * @swagger

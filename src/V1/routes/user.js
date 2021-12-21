@@ -106,15 +106,13 @@ router.get("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmi
  *                              - $ref: '#/components/responses/UserBadParams'
  *          401:
  *              $ref: '#/components/responses/MissingJWT'
- *          403:
- *              $ref: '#/components/responses/mustBeAdmin'
  *          404:
  *              description: Not found
  *          500:
  *              description: Server error
  *
  */
-router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAdmin, UserController.getUsersCount);
+router.get("/count", JWTMiddleWare.identification, UserController.getUsersCount);
 
 /**
  * @swagger
@@ -146,7 +144,7 @@ router.get("/count", JWTMiddleWare.identification, AuthorizationMiddleware.mustB
  *              description: Server error
  *
  */
-router.get("/:id", JWTMiddleWare.identification, UserController.getUserById);
+router.get("/:id", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAuthorizedToGetUser, UserController.getUserById);
 
 
 /**
@@ -182,7 +180,7 @@ router.get("/:id", JWTMiddleWare.identification, UserController.getUserById);
  *              description: Server error
  *
  */
-router.patch("/", JWTMiddleWare.identification, UserController.updateUser);
+router.patch("/", JWTMiddleWare.identification, AuthorizationMiddleware.mustBeAuthorizedToUpdateUser, UserController.updateUser);
 
 /**
  * @swagger
@@ -196,14 +194,24 @@ router.patch("/", JWTMiddleWare.identification, UserController.updateUser);
  *          201:
  *              $ref: '#/components/responses/UserAdded'
  *          400:
- *              $ref: '#/components/responses/UserBadJSONBody'
+ *              description: JWT not valid or JSON body not correct
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          oneOf:
+ *                              - $ref: '#/components/responses/ErrorJWT'
+ *                              - $ref: '#/components/responses/UserBadJSONBody'
+ *          401:
+ *              $ref: '#/components/responses/MissingJWT'
+ *          403:
+ *              $ref: '#/components/responses/mustBeAuthorizedOnRoute'
  *          409:
  *              $ref: '#/components/responses/UserAlreadyExist'
  *          500:
  *              description: Server error
  *
  */
-router.post("/", UserController.insertUser);
+router.post("/",AuthorizationMiddleware.mustBeAuthorizedToCreateUser, UserController.insertUser);
 
 /**
  * @swagger

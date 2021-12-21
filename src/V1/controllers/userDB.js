@@ -160,38 +160,30 @@ module.exports.insertUser = async (req, res) => {
  */
 module.exports.updateUser = async (req, res) => {
     const {id: userId, firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number} = req.body;
-    if(userId === undefined || userId === ""){ 
-             res.sendStatus(400);
-    }else{
-        const {id: activeUserId} = req.session;
-        if((req.session !== undefined && req.session.authLevel === "admin") || activeUserId === userId){
-            if(req.session.authLevel !== "admin") req.body.is_admin = false; // pour ne pas qu'un client puisse se changer en admin
-            const client = await pool.connect();
-            try{
-                const promiseUserToModify = userDB.getUserById(client, userId); //utilisateur à modifier avec l'id du body
-                const promiseUserExist = userDB.userExistByUsername(client, username); //vérifié si un utilisateur existe avec le pseudo dans le body
-                const promiseValue = await Promise.all([promiseUserToModify, promiseUserExist]);
-                const userToModify = promiseValue[0].rows[0] !== undefined ? promiseValue[0].rows[0] : undefined; 
-                const userExist = promiseValue[1]; 
-                if(userToModify === undefined){
-                    res.status(404).json({error: "Utilisateur introuvable"});
-                }else{
-                    if(!userExist || username === userToModify.username){ //si un utilisateur avec le nouveau pseudo ou si c'est le même qu'avant
-                        await userDB.updateUser(client, userId, firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number);
-                        res.sendStatus(204);
-                    }else{
-                        res.status(409).json({error: "Ce nom d'utilisateur existe déjà"});
-                    }
-                }
-            }catch(e){
-                console.error(e);
-                res.sendStatus(500);
-            }finally{
-                client.release();
-            } 
-        }else{
-            res.sendStatus(403);
+    /* le check de l'userID est fait dans le middleware authorization*/
+
+    const client = await pool.connect();
+    try {
+        const promiseUserToModify = userDB.getUserById(client, userId); //utilisateur à modifier avec l'id du body
+        const promiseUserExist = userDB.userExistByUsername(client, username); //vérifié si un utilisateur existe avec le pseudo dans le body
+        const promiseValue = await Promise.all([promiseUserToModify, promiseUserExist]);
+        const userToModify = promiseValue[0].rows[0] !== undefined ? promiseValue[0].rows[0] : undefined;
+        const userExist = promiseValue[1];
+        if (userToModify === undefined) {
+            res.status(404).json({ error: "Utilisateur introuvable" });
+        } else {
+            if (!userExist || username === userToModify.username) { //si un utilisateur avec le nouveau pseudo ou si c'est le même qu'avant
+                await userDB.updateUser(client, userId, firstname, lastname, phone_number, username, password, is_admin, province, city, street_and_number);
+                res.sendStatus(204);
+            } else {
+                res.status(409).json({ error: "Ce nom d'utilisateur existe déjà" });
+            }
         }
+    } catch (e) {
+        console.error(e);
+        res.sendStatus(500);
+    } finally {
+        client.release();
     }
 }
 
@@ -213,7 +205,7 @@ module.exports.getAllUsers = async (req, res) => {
     const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
 
-    if((req.query.rowLimit !== undefined && req.query.rowLimit === "") || (req.query.offset !== undefined && req.query.offset === "") ||
+    if((req.query.rowLimit !== undefined && (req.query.rowLimit === "" || isNaN(req.query.rowLimit))) || (req.query.offset !== undefined && (req.query.offset === "" || isNaN(req.query.offset))) ||
         (req.query.searchElem !== undefined && req.query.searchElem === "")){
             res.sendStatus(404);
     }else{
@@ -275,29 +267,24 @@ module.exports.getUsersCount = async (req, res) => {
  *                       $ref: '#/components/schemas/User'
  */
 module.exports.getUserById = async (req, res) => {
-    const {id: activeUserId} = req.session;
-    const userId = isNaN(req.params.id) ? undefined : parseInt(req.params.id);
-    if((req.session !== undefined && req.session.authLevel === "admin") || activeUserId === userId){
-        const client = await pool.connect();
-        try{
-            if(userId !== undefined){
-                const {rows: user} = await userDB.getUserById(client, userId);
-                if(user !== undefined){
-                    res.json(user);
-                }else{
-                   
-                }
-            }else{
-                res.sendStatus(404);
-            } 
-        }catch(e){
-            console.error(e);
-            res.sendStatus(500);
-        }finally{
-            client.release();
+    const userId = req.params.id; /* le check de l'userID est fait dans le middleware authorization*/
+    const client = await pool.connect();
+    try {
+        if (userId !== undefined) {
+            const { rows: user } = await userDB.getUserById(client, userId);
+            if (user !== undefined) {
+                res.json(user);
+            } else {
+
+            }
+        } else {
+            res.sendStatus(404);
         }
-    }else{
-        res.sendStatus(403);
+    } catch (e) {
+        console.error(e);
+        res.sendStatus(500);
+    } finally {
+        client.release();
     }
 }
 

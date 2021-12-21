@@ -57,67 +57,59 @@ const mealDB = require('../models/mealDB');
  *                          - user
  */
 module.exports.insertOrder = async (req, res) => {
+    /* le check de l'userID est fait dans le middleware authorization*/
     const {user, order_date, meals_id: mealsId} = req.body;
-    if(user?.id === undefined || user?.id === ""){
-        res.sendStatus(400);
-    }else{
-        const {id: activeUserId} = req.session;
-        if((req.session !== undefined && req.session.authLevel === "admin") || activeUserId === user.id){
-            const client = await pool.connect();
-            try{
-                await client.query("BEGIN;");
-                const userExist = await userDB.userExistById(client, user.id);
-                if(userExist){
-                    const orderResponse = await orderDB.createOrder(client, user.id, order_date);
-                    let promises = [];
-                    if(mealsId !== undefined && mealsId[0] !== undefined){
-                        for(mealData of mealsId){
-                            const {rows: meal} = await mealDB.getMealById(client, mealData.id);
-                            const isMealAlreadyTaken = meal[0] !== undefined && meal[0].order_fk !== null && meal[0].order_fk !== undefined && meal[0].order_fk !== "" ? true : false;
-                            if(!isMealAlreadyTaken){
-                                promises.push(mealDB.updateMeal(client, mealData.id, undefined, undefined, undefined, undefined, undefined, undefined, orderResponse.rows[0].id, undefined));            
-                            }
-                        }
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN;");
+        const userExist = await userDB.userExistById(client, user.id);
+        if (userExist) {
+            const orderResponse = await orderDB.createOrder(client, user.id, order_date);
+            const promises = [];
+            if (mealsId !== undefined && mealsId[0] !== undefined) {
+                for (mealData of mealsId) {
+                    const { rows: meal } = await mealDB.getMealById(client, mealData.id);
+                    const isMealAlreadyTaken = meal[0] !== undefined && meal[0].order_fk !== null && meal[0].order_fk !== undefined && meal[0].order_fk !== "" ? true : false;
+                    if (!isMealAlreadyTaken) {
+                        promises.push(mealDB.updateMeal(client, mealData.id, undefined, undefined, undefined, undefined, undefined, undefined, orderResponse.rows[0].id, undefined));
                     }
-                    const response = await Promise.all(promises);
-                    if(response.length > 0){ //check si des plats ont été modifiés ou pas
-                        let i = 0;
-                        let areMealsUpdated = true;
-                        while(i < response.length && areMealsUpdated){
-                            if(response[i].rowCount !== 1) areMealsUpdated = false;
-                            i++;
-                        }
-                        if((mealsId === undefined || (mealsId[0] !== undefined && response[0] !== undefined)) && areMealsUpdated){ //pour pouvoir créer une commande avec rien ou avec les repas
-                            await client.query("COMMIT");
-                            res.sendStatus(201);
-                        }else{
-                            await client.query("ROLLBACK");
-                            res.status(404).json({error: "Repas introuvable"});
-                        }
-                    }else{
-                        if(mealsId === undefined || (mealsId !== undefined && mealsId.length === promises.length)){ //pour pouvoir créer une commande avec rien ou avec les repas
-                            await client.query("COMMIT");
-                            res.sendStatus(201);
-                        }else{
-                            await client.query("ROLLBACK");
-                            res.status(409).json({error: "Repas déjà pris"});
-                        }
-                    }
-                }else{
-                    await client.query("ROLLBACK");
-                    if(!userExist) res.status(404).json({error: "Utilisateur introuvable"});
-                    else res.sendStatus(404);
                 }
-            }catch(e){
-                await client.query("ROLLBACK;");
-                console.error(e);
-                res.sendStatus(500);
-            }finally{
-                client.release();
             }
-        }else{
-            res.sendStatus(403);
+            const response = await Promise.all(promises);
+            if (response.length > 0) { //check si des plats ont été modifiés ou pas
+                let i = 0;
+                let areMealsUpdated = true;
+                while (i < response.length && areMealsUpdated) {
+                    if (response[i].rowCount !== 1) areMealsUpdated = false;
+                    i++;
+                }
+                if ((mealsId === undefined || (mealsId[0] !== undefined && response[0] !== undefined)) && areMealsUpdated) { //pour pouvoir créer une commande avec rien ou avec les repas
+                    await client.query("COMMIT");
+                    res.sendStatus(201);
+                } else {
+                    await client.query("ROLLBACK");
+                    res.status(404).json({ error: "Repas introuvable" });
+                }
+            } else {
+                if (mealsId === undefined || (mealsId !== undefined && mealsId.length === promises.length)) { //pour pouvoir créer une commande avec rien ou avec les repas
+                    await client.query("COMMIT");
+                    res.sendStatus(201);
+                } else {
+                    await client.query("ROLLBACK");
+                    res.status(409).json({ error: "Repas déjà pris" });
+                }
+            }
+        } else {
+            await client.query("ROLLBACK");
+            if (!userExist) res.status(404).json({ error: "Utilisateur introuvable" });
+            else res.sendStatus(404);
         }
+    } catch (e) {
+        await client.query("ROLLBACK;");
+        console.error(e);
+        res.sendStatus(500);
+    } finally {
+        client.release();
     }
 }
 
@@ -151,15 +143,15 @@ module.exports.insertOrder = async (req, res) => {
  *                          - user
  *                          - order_date
  */
-module.exports.updateOrder = async (req, res) => {
+module.exports.updateOrder = async (req, res) => { //TODO: update que pour 1 champs -> si temps
     const {id: orderId, order_date, user} = req.body;
-    if(orderId === undefined || orderId === "" || user?.id === undefined || user?.id === "" || order_date === undefined || order_date === ""){
+    if(orderId === undefined || orderId === "" || user.id === undefined || user.id === "" || isNaN(user.id) || order_date === undefined || order_date === ""){
         res.sendStatus(400);
     }else{
         const client = await pool.connect();
         try{
             const promiseOrderExist = orderDB.orderExistById(client, orderId);
-            const promiseUserExist = userDB.userExistById(client, user?.id);
+            const promiseUserExist = userDB.userExistById(client, user.id);
             const promiseValue = await Promise.all([promiseOrderExist, promiseUserExist]);
             const orderExist = promiseValue[0];
             const userExist = promiseValue[1];
@@ -199,7 +191,7 @@ module.exports.getAllOrders = async (req, res) => {
     const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
 
-    if((req.query.rowLimit !== undefined && req.query.rowLimit === "") || (req.query.offset !== undefined && req.query.offset === "") ||
+    if((req.query.rowLimit !== undefined && (req.query.rowLimit === "" || isNaN(req.query.rowLimit))) || (req.query.offset !== undefined && (req.query.offset === "" || isNaN(req.query.offset))) ||
         (req.query.searchElem !== undefined && req.query.searchElem === "")){
             res.sendStatus(404);
     }else{
