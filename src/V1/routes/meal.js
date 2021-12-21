@@ -13,6 +13,13 @@ const upload = multer({
     },
     storage: storage
 });
+const fileSizeLimitErrorHandler = (err, req, res, next) => {
+    if (err) {
+      res.send(413)
+    } else {
+      next()
+    }
+  }
 
 
 /**
@@ -157,13 +164,15 @@ router.get("/:id", JWTMiddleWare.identification, mealController.getMealById);
  *              $ref: '#/components/responses/mustBeAdmin'
  *          404:
  *              description: No meal found or related references not found
+ *          413:
+ *              description: File too large
  *          500:
  *              description: Server error
  *
  */
 router.patch("/", JWTMiddleWare.identification, upload.fields([
     {name: 'image', maxCount: 1}
-]), AuthorizationMiddleware.mustBeAdmin, mealController.updateMeal);
+]),fileSizeLimitErrorHandler, AuthorizationMiddleware.mustBeAdmin, mealController.updateMeal);
 
 /**
  * @swagger
@@ -192,13 +201,15 @@ router.patch("/", JWTMiddleWare.identification, upload.fields([
  *              $ref: '#/components/responses/mustBeAuthorizedOnRoute'
  *          404:
  *              description: Related references not found
+ *          413:
+ *              description: File too large
  *          500:
  *              description: Server error
  *
  */
 router.post('/', JWTMiddleWare.identification, upload.fields([
 {name: 'image', maxCount: 1}
-]), AuthorizationMiddleware.mustBeAuthorizedToCreateMeal, mealController.insertMeal);
+]),fileSizeLimitErrorHandler, AuthorizationMiddleware.mustBeAuthorizedToCreateMeal, mealController.insertMeal);
 
 /**
  * @swagger

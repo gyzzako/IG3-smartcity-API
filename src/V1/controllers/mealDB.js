@@ -59,7 +59,7 @@ const destFolderImages = "./src/V1/upload/mealImages";
  *  requestBodies:
  *      MealToAdd:
  *          content:
- *              application/json:
+ *              multipart/form-data:
  *                  schema:
  *                      type: object
  *                      properties:
@@ -85,18 +85,20 @@ const destFolderImages = "./src/V1/upload/mealImages";
  *                              type: integer
  *                              description: Order ID of the related order (omit if there is none)
  *                          image:
- *                              type: object
- *                              description: Image bytes
+ *                              type: string
+ *                              format: byte
+ *                              description: Bytes of the images
  *                      required:
  *                          - name
  *                          - description
  *                          - portion_number
+ *                          - user_fk
  *                          - category_fk
  *                          - image
  */
 module.exports.insertMeal = async (req, res) => {
     const {user_fk: userId, name, description, portion_number, category_fk: categoryId, order_fk, publication_date} = req.body;
-    const image = req.files?.image[0];
+    const image = req.files?.image !== undefined ? req.files.image[0] : undefined;
     /* le check de l'userID est fait dans le middleware authorization*/
     if(name === undefined || name === "" || description === undefined || description === "" || portion_number === undefined || 
         portion_number === "" || isNaN(portion_number) || categoryId === undefined || categoryId === "" || isNaN(categoryId) ||
@@ -151,7 +153,7 @@ module.exports.insertMeal = async (req, res) => {
  *  requestBodies:
  *      MealToUpdate:
  *          content:
- *              application/json:
+ *              multipart/form-data:
  *                  schema:
  *                      type: object
  *                      properties:
@@ -179,15 +181,15 @@ module.exports.insertMeal = async (req, res) => {
  *                              type: integer
  *                              description: Order ID of the related order (omit if there is none or -1 to remove the current one)
  *                          image:
- *                              type: object
- *                              description: Image bytes
+ *                              type: string
+ *                              format: byte
+ *                              description: Bytes of the images
  *                      required:
  *                          - id
  */
 module.exports.updateMeal = async (req, res) => {
     const {id: mealId, user_fk: userId, name, description, portion_number, publication_date, category_fk: categoryId, order_fk, oldImageName} = req.body;
-    const images = req.files?.image;
-    const image = images !== undefined ? images[0] : undefined;
+    const image = req.files?.image !== undefined ? req.files.image[0] : undefined;
     if(mealId === undefined || mealId === "" || (portion_number !== undefined && (portion_number === "" || isNaN(portion_number))) || (categoryId !== undefined && (categoryId === "" || isNaN(categoryId))) || 
     (order_fk !== undefined && (order_fk === "" || isNaN(order_fk)))){
             res.sendStatus(400);
