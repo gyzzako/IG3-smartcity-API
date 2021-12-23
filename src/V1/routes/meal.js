@@ -9,13 +9,13 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({
     limits: {
-        fileSize: 5000000 // 5MB
+        fileSize: 1000000 // 5MB
     },
     storage: storage
 });
 const fileSizeLimitErrorHandler = (err, req, res, next) => {
-    if (err) {
-      res.send(413)
+    if (err.code === "LIMIT_FILE_SIZE") {
+      res.sendStatus(413)
     } else {
       next()
     }
@@ -45,6 +45,12 @@ const fileSizeLimitErrorHandler = (err, req, res, next) => {
  *              type: integer
  *          - name: searchElem
  *            description: Research element
+ *            in: query
+ *            required: false
+ *            schema:
+ *              type: string
+ *          - name: mealAvailableFilter
+ *            description: Content should be 'yes' or 'true' if you want to enable it
  *            in: query
  *            required: false
  *            schema:

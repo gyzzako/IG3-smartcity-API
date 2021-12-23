@@ -60,14 +60,22 @@ module.exports.updateMeal = async (client, mealId, name, description, portionNum
     }
 }
 
-module.exports.getAllMeals = async (client, rowLimit, offset, searchElem) => {
+module.exports.getAllMeals = async (client, rowLimit, offset, searchElem, isMealAvailableFiltered) => {
     const params = [];
     let query = `SELECT *, TO_CHAR(meal.publication_date::DATE, 'dd-mm-yyyy') as publication_date, meal.id as id, meal.name as name,
                 category.id as category_id, category.name as category_name FROM meal LEFT JOIN category ON (meal.category_fk = category.id)`;
 
     if(searchElem !== undefined){
         params.push("%" + searchElem + "%");
-        query += ` WHERE CAST(meal.id AS TEXT) LIKE $${params.length} OR LOWER(meal.name) LIKE $${params.length} OR LOWER(meal.description) LIKE $${params.length} OR CAST(order_fk AS TEXT) LIKE $${params.length}`;
+        if(isMealAvailableFiltered !== undefined && isMealAvailableFiltered){
+            query += ` WHERE (CAST(meal.id AS TEXT) LIKE $${params.length} OR LOWER(meal.name) LIKE $${params.length} OR LOWER(meal.description) LIKE $${params.length} OR CAST(order_fk AS TEXT) LIKE $${params.length}) AND order_fk IS NULL`;
+        }else{
+            query += ` WHERE CAST(meal.id AS TEXT) LIKE $${params.length} OR LOWER(meal.name) LIKE $${params.length} OR LOWER(meal.description) LIKE $${params.length} OR CAST(order_fk AS TEXT) LIKE $${params.length}`;
+        }
+    }
+
+    if(searchElem === undefined && isMealAvailableFiltered !== undefined && isMealAvailableFiltered){
+        query += ` WHERE order_fk IS NULL`;
     }
 
     query += ` ORDER BY meal.id DESC`;

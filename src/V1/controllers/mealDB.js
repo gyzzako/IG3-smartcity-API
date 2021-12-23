@@ -213,7 +213,7 @@ module.exports.updateMeal = async (req, res) => {
             const userExist = promiseValue[1];
             const categoryExist = promiseValue[2];
             const orderExist = promiseValue[3];
-            const orderId = orderExist ? order_fk : undefined; //sera soit l'id de la commande si il y a correspondance ou undefined si rien n'est précisé dans le body
+            let orderId = orderExist ? order_fk : undefined; //sera soit l'id de la commande si il y a correspondance ou undefined si rien n'est précisé dans le body
             if(order_fk == -1) orderId = null; // pour supprimer une commande d'un repas
 
             /*vérifie si le repas existe, si un utilisateur est précisé et qu'il existe ou pas d'utilisateur précisé,
@@ -261,6 +261,7 @@ module.exports.getAllMeals = async (req, res) => {
     const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
     const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
+    const isMealAvailableFiltered = req.query.mealAvailableFilter !== undefined && (req.query.mealAvailableFilter === 'yes' || req.query.mealAvailableFilter === 'true') ? true : false;
 
     if((req.query.rowLimit !== undefined && (req.query.rowLimit === "" || isNaN(req.query.rowLimit))) || (req.query.offset !== undefined && (req.query.offset === "" || isNaN(req.query.offset))) ||
         (req.query.searchElem !== undefined && req.query.searchElem === "")){
@@ -268,7 +269,7 @@ module.exports.getAllMeals = async (req, res) => {
     }else{
         const client = await pool.connect();
         try{
-            const {rows: meals} = await mealDB.getAllMeals(client, rowLimit, offset, searchElem);
+            const {rows: meals} = await mealDB.getAllMeals(client, rowLimit, offset, searchElem, isMealAvailableFiltered);
             if(meals !== undefined){
                 let category = {}
                 meals.forEach(meal => {
