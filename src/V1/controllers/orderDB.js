@@ -82,15 +82,21 @@ module.exports.insertOrder = async (req, res) => {
                     if (response[i].rowCount !== 1) areMealsUpdated = false;
                     i++;
                 }
-                if ((mealsId === undefined || (mealsId[0] !== undefined && response[0] !== undefined)) && areMealsUpdated) { //pour pouvoir créer une commande avec rien ou avec les repas
+
+                if (mealsId !== undefined && mealsId[0] !== undefined && response[0] !== undefined && areMealsUpdated && mealsId.length === response.length) { //pour pouvoir créer une commande avec rien ou avec les repas
                     await client.query("COMMIT");
                     res.sendStatus(201);
                 } else {
                     await client.query("ROLLBACK");
-                    res.status(404).json({ error: "Repas introuvable" });
+                    if(areMealsUpdated){
+                        res.status(409).json({ error: "Repas déjà pris" });
+                    }else{
+                        res.status(404).json({ error: "Repas introuvable" });
+                    }
+                    
                 }
             } else {
-                if (mealsId === undefined || (mealsId !== undefined && mealsId.length === promises.length)) { //pour pouvoir créer une commande avec rien ou avec les repas
+                if (mealsId === undefined || (mealsId !== undefined && mealsId.length === response.length)) { //pour pouvoir créer une commande avec rien ou avec les repas
                     await client.query("COMMIT");
                     res.sendStatus(201);
                 } else {
