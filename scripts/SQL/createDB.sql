@@ -74,7 +74,7 @@ VALUES ('Pizza-Veggie ','Plat frais à chauffer au four à une temperature ne de
        ('Carbonita-Do-Madrid','Plat chaud à manger le jour meme',1,'2020-12-01',2,5,null,'6faf4e92-6000-4d9c-8e73-92d706a788a0.jpeg'),
        ('Moules Belge','Plat chaud à consommer de préférence le meme jour et avec des frites ou autres choses',3,'2021-12-03',8,4,null,'9cc1d114-c3dd-4795-b23c-464e58dc3346.jpeg'),
        ('Bicky Burger','Burger Belge au boeuf ,salades et fromage à consommer de préférence le meme jour et chaud et avec un bon paquet des frites',7,'2021-12-10',7,1,null,'c96b6932-bc20-46d3-a335-77826ee64eef.jpeg'),
-       ('Bicky nature','Parfait pour ceux qui ne consomment trop epcié, Pain, Fromage et viande de poulet ',8,'2021-12-24',3,1,null,'2a316687-d75e-4d89-b22e-1942d9018518.jpeg'),
+       ('Bicky nature','Parfait pour ceux qui ne consomment trop épicé, Pain, Fromage et viande de poulet ',8,'2021-12-24',3,1,null,'2a316687-d75e-4d89-b22e-1942d9018518.jpeg'),
        ('Sushi','Riz, saumon,concombre,gengembre mariné,sel et Wasabi',14,'2021-12-24',3,3,null,'4fe8b802-403c-4f6f-b2eb-26edfe9f9ab5.jpeg'),
        ('Maki Sushi','Riz, saumon, oeuf,sel,et soja',4,'2022-01-01',4,3,null,'ffd05ff1-7064-43c0-96b1-39d2673b9d3f.jpeg');
 
