@@ -17,14 +17,14 @@ module.exports.updateOrder = async (client, orderId, orderDate, userId) => {
 
 module.exports.getAllOrders = async (client, rowLimit, offset, searchElem) => {
     const params = [];
-    let query = `SELECT *, TO_CHAR(order_date::DATE, 'dd-mm-yyyy') as order_date FROM "order"`;
+    let query = `SELECT o.id, TO_CHAR(o.order_date::DATE, 'dd-mm-yyyy') as order_date, u.id as user_id, u.firstname, u.lastname, u.phone_number, u.username, u.isAdmin, u.province, u.city, u.street_and_number FROM "order" o LEFT JOIN "user" u ON o.user_fk = u.id`;
 
     if(searchElem !== undefined){
         params.push("%" + searchElem + "%");
-        query += ` WHERE CAST(id AS TEXT) LIKE $${params.length} OR CAST(TO_CHAR(order_date::DATE, 'dd-mm-yyyy') AS TEXT) LIKE $${params.length}`;
+        query += ` WHERE CAST(o.id AS TEXT) LIKE $${params.length} OR CAST(TO_CHAR(o.order_date::DATE, 'dd-mm-yyyy') AS TEXT) LIKE $${params.length}`;
     }
 
-    query += ` ORDER BY id DESC`;
+    query += ` ORDER BY o.id DESC`;
 
     if(rowLimit !== undefined){
         params.push(rowLimit);
@@ -35,6 +35,7 @@ module.exports.getAllOrders = async (client, rowLimit, offset, searchElem) => {
         params.push(offset);
         query += ` OFFSET $${params.length}`;
     }
+    console.log(query);
     return await client.query(query, params);
 }
 
@@ -47,7 +48,7 @@ module.exports.getOrdersCount = async (client, searchElem) => {
 }
 
 module.exports.getOrderById = async (client, orderId) => {
-    return await client.query(`SELECT *, TO_CHAR(order_date::DATE, 'dd-mm-yyyy') as order_date FROM "order" WHERE id = $1 LIMIT 1`, [orderId]);
+    return await client.query(`SELECT o.id, TO_CHAR(o.order_date::DATE, 'dd-mm-yyyy') as order_date, u.id as user_id, u.firstname, u.lastname, u.phone_number, u.username, u.isAdmin, u.province, u.city, u.street_and_number FROM "order" o LEFT JOIN "user" u ON o.user_fk = u.id WHERE o.id = $1 LIMIT 1`, [orderId]);
 }
 
 module.exports.deleteOrderById = async (client, orderId) => {

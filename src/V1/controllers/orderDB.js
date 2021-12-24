@@ -18,6 +18,16 @@ const mealDB = require('../models/mealDB');
  *              user_fk:
  *                  type: integer
  *                  description: User ID of who created the order
+ *      OrderWithConcernedUser:
+ *          type: object
+ *          properties:
+ *              id:
+ *                  type: integer
+ *              order_date:
+ *                  type: string
+ *                  description: Order date
+ *              user:
+ *                  $ref: '#/components/schemas/User'
  *  responses:
  *      OrderBadJSONBody:
  *          description: The JSON body is not correct
@@ -183,7 +193,7 @@ module.exports.updateOrder = async (req, res) => { //TODO: update que pour 1 cha
  *                   schema:
  *                      type: array
  *                      items:
- *                          $ref: '#/components/schemas/Order'
+ *                          $ref: '#/components/schemas/OrderWithConcernedUser'
  */
 module.exports.getAllOrders = async (req, res) => {
     const client = await pool.connect();
@@ -198,6 +208,30 @@ module.exports.getAllOrders = async (req, res) => {
         try{
             const {rows: orders} = await orderDB.getAllOrders(client, rowLimit, offset, searchElem);
             if(orders !== undefined){
+                let user = {}
+                orders.forEach(order => {
+                    user = {};
+                    user.id = order.user_id;
+                    user.firstname = order.firstname;
+                    user.lastname = order.lastname;
+                    user.phone_number = order.phone_number;
+                    user.username = order.username;
+                    user.isadmin = order.isadmin;
+                    user.province = order.province;
+                    user.city = order.city;
+                    user.street_and_number = order.street_and_number;
+                    order.user = user;
+
+                    delete order.user_id;
+                    delete order.firstname;
+                    delete order.lastname;
+                    delete order.phone_number;
+                    delete order.username;
+                    delete order.isadmin;
+                    delete order.province;
+                    delete order.city;
+                    delete order.street_and_number;
+                });
                 res.json(orders);
             }else{
                 res.sendStatus(404);
@@ -249,22 +283,44 @@ module.exports.getOrdersCount = async (req, res) => {
  *           content:
  *               application/json:
  *                   schema:
- *                       $ref: '#/components/schemas/Order'
+ *                       $ref: '#/components/schemas/OrderWithConcernedUser'
  */
 module.exports.getOrderById = async (req, res) => {
     const orderId = isNaN(req.params.id) ? undefined : parseInt(req.params.id);
     const client = await pool.connect();
     try{
         if(orderId !== undefined){
-            const {rows: order} = await orderDB.getOrderById(client, orderId);
+            const {rows: orders} = await orderDB.getOrderById(client, orderId);
+            const order = orders[0] !== undefined ? orders[0] : undefined;
             if(order !== undefined){
+                let user = {}
+                user.id = order.user_id;
+                user.firstname = order.firstname;
+                user.lastname = order.lastname;
+                user.phone_number = order.phone_number;
+                user.username = order.username;
+                user.isadmin = order.isadmin;
+                user.province = order.province;
+                user.city = order.city;
+                user.street_and_number = order.street_and_number;
+                order.user = user;
+
+                delete order.user_id;
+                delete order.firstname;
+                delete order.lastname;
+                delete order.phone_number;
+                delete order.username;
+                delete order.isadmin;
+                delete order.province;
+                delete order.city;
+                delete order.street_and_number;
                 res.json(order);
             }else{
                 res.sendStatus(404);
             }
         }else{
             res.sendStatus(404);
-        }
+        }  
     }catch(e){
         console.error(e);
         res.sendStatus(500);

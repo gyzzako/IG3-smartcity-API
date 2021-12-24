@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "ee9c81fa-aadf-487a-992a-47657c0e2b80",
+		"_postman_id": "cb3b747e-df5b-414b-bece-f03fe17aaf8b",
 		"name": "SmartCityAPI",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -569,9 +569,9 @@
 									"pm.test(\"All orders containing the search element should be returned\", () => {\r",
 									"    const allOrders = [\r",
 									"        {\r",
-									"        \"id\": 10,\r",
-									"        \"order_date\": \"14-06-2022\",\r",
-									"        \"user_fk\": 8\r",
+									"            \"id\": 10,\r",
+									"            \"order_date\": \"14-06-2022\",\r",
+									"            \"user_fk\": 8\r",
 									"        }\r",
 									"    ];\r",
 									"    const response = pm.response.json();\r",
@@ -662,6 +662,225 @@
 								"v1",
 								"category",
 								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Get user as admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"The status code should be 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All users containing the search element should be returned\", () => {\r",
+									"    const allUsers = [\r",
+									"        {\r",
+									"            \"id\": 1,\r",
+									"            \"firstname\": \"Arnaud\",\r",
+									"            \"lastname\": \"Berg\",\r",
+									"            \"phone_number\": \"0498989898\",\r",
+									"            \"username\": \"arnaud_berg\",\r",
+									"            \"isadmin\": true,\r",
+									"            \"province\": \"Namur\",\r",
+									"            \"city\": \"Walonnie\",\r",
+									"            \"street_and_number\": \"Chatelet 96\"\r",
+									"        }\r",
+									"    ];\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.be.eql(allUsers);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_admin}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}:{{port}}/v1/user/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"v1",
+								"user",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add user as client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"The status code should be 403\", () => {\r",
+									"    pm.response.to.have.status(403);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_client}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"firstname\": \"testfirstname\",\r\n    \"lastname\": \"testlastname\",\r\n    \"phone_number\": \"0494849898\",\r\n    \"password\": \"testpassword\",\r\n    \"username\": \"testusername\",\r\n    \"is_admin\": true,\r\n    \"province\": \"Namur\",\r\n    \"city\": \"Walonnie\",\r\n    \"street_and_number\": \"Chatelet 10\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}:{{port}}/v1/user",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"v1",
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Patch other user then current user as client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"The status code should be 403\", () => {\r",
+									"    pm.response.to.have.status(403);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_client}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\":7,\r\n    \"firstname\":\"userPatched\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}:{{port}}/v1/user",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"v1",
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete user as admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"The status code should be 403\", () => {\r",
+									"    pm.response.to.have.status(403);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token_admin}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 3\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}:{{port}}/v1/user",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"v1",
+								"user"
 							]
 						}
 					},

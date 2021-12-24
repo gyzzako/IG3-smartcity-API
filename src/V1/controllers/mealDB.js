@@ -257,7 +257,7 @@ module.exports.updateMeal = async (req, res) => {
  *                      items:
  *                          $ref: '#/components/schemas/Meal'
  */
-module.exports.getAllMeals = async (req, res) => {
+module.exports.getAllMeals = async (req, res) => { //TODO: faire pour recevoir objet user
     const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
     const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
