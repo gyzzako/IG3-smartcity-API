@@ -9,7 +9,7 @@ async function initDB(){
         const query = fs.readFileSync(path.join(__dirname,"../SQL/createDB.sql"),"utf-8");
         await client.query(query);
     }catch(e){
-        console.log(e);
+        console.error(e);
     }finally{
         client.release();
         await pool.end();

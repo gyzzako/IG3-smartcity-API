@@ -12,7 +12,7 @@ const destFolderImages = "./src/V1/upload/mealImages";
  * @swagger
  * components:
  *  schemas:
- *      Meal:
+ *      MealWithConcernedUser:
  *          type: object
  *          properties:
  *              id:
@@ -32,15 +32,16 @@ const destFolderImages = "./src/V1/upload/mealImages";
  *              user_fk:
  *                  type: integer
  *                  description: User ID of who created the meal
- *              category_fk:
- *                  type: integer
- *                  description: Category ID to which the meal belongs
+ *              category:
+ *                  $ref: '#/components/schemas/Category'
  *              order_fk:
  *                  type: integer
  *                  description: Order ID of the related order (null if there is none)
  *              image:
  *                  type: string
  *                  description: Image path + name
+ *              user:
+ *                  $ref: '#/components/schemas/UserWithoutPassword'
  * 
  * 
  *  responses:
@@ -255,9 +256,9 @@ module.exports.updateMeal = async (req, res) => {
  *                   schema:
  *                      type: array
  *                      items:
- *                          $ref: '#/components/schemas/Meal'
+ *                          $ref: '#/components/schemas/MealWithConcernedUser'
  */
-module.exports.getAllMeals = async (req, res) => { //TODO: faire pour recevoir objet user
+module.exports.getAllMeals = async (req, res) => {
     const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
     const offset = req.query.offset !== undefined && req.query.offset !== "" ? parseInt(req.query.offset) : undefined;
     const searchElem = req.query.searchElem !== undefined && req.query.searchElem !== "" ? req.query.searchElem.toLowerCase() : undefined;
@@ -272,15 +273,42 @@ module.exports.getAllMeals = async (req, res) => { //TODO: faire pour recevoir o
             const {rows: meals} = await mealDB.getAllMeals(client, rowLimit, offset, searchElem, isMealAvailableFiltered);
             if(meals !== undefined){
                 let category = {}
+                let user = {}
                 meals.forEach(meal => {
+                    /*formatage category*/
                     category = {};
                     category.id = meal.category_id;
                     category.name = meal.category_name;
-
                     meal.category = category;
                     delete meal.category_fk;
                     delete meal.category_id
                     delete meal.category_name
+
+                    /*formatage user*/
+                    user = {}
+                    user.id = meal.user_fk;
+                    user.firstname = meal.firstname;
+                    user.lastname = meal.lastname;
+                    user.phone_number = meal.phone_number;
+                    user.username = meal.username;
+                    user.isadmin = meal.isadmin;
+                    user.province = meal.province;
+                    user.city = meal.city;
+                    user.street_and_number = meal.street_and_number;
+                    meal.user = user;
+    
+                    delete meal.user_fk;
+                    delete meal.password;
+                    delete meal.user_id;
+                    delete meal.firstname;
+                    delete meal.lastname;
+                    delete meal.phone_number;
+                    delete meal.username;
+                    delete meal.isadmin;
+                    delete meal.province;
+                    delete meal.city;
+                    delete meal.street_and_number;
+
                 });
                 res.json(meals);
             }else{
@@ -335,7 +363,7 @@ module.exports.getMealsCount = async (req, res) => {
  *           content:
  *               application/json:
  *                   schema:
- *                       $ref: '#/components/schemas/Meal'
+ *                       $ref: '#/components/schemas/MealWithConcernedUser'
  */
 module.exports.getMealById = async (req, res) => {
     const mealId = isNaN(req.params.id) ? undefined : parseInt(req.params.id);
@@ -345,14 +373,39 @@ module.exports.getMealById = async (req, res) => {
             const {rows: meals} = await mealDB.getMealById(client, mealId);
             const meal = meals[0] !== undefined ? meals[0] : undefined;
             if(meal !== undefined){
-                let category = {}
-                category.id = meal.category_id;
-                category.name = meal.category_name;
+                    /*formatage category*/
+                    let category = {};
+                    category.id = meal.category_id;
+                    category.name = meal.category_name;
+                    meal.category = category;
+                    delete meal.category_fk;
+                    delete meal.category_id
+                    delete meal.category_name
+
+                    /*formatage user*/
+                    let user = {}
+                    user.id = meal.user_fk;
+                    user.firstname = meal.firstname;
+                    user.lastname = meal.lastname;
+                    user.phone_number = meal.phone_number;
+                    user.username = meal.username;
+                    user.isadmin = meal.isadmin;
+                    user.province = meal.province;
+                    user.city = meal.city;
+                    user.street_and_number = meal.street_and_number;
+                    meal.user = user;
     
-                meal.category = category;
-                delete meal.category_fk;
-                delete meal.category_id
-                delete meal.category_name
+                    delete meal.user_fk;
+                    delete meal.password;
+                    delete meal.user_id;
+                    delete meal.firstname;
+                    delete meal.lastname;
+                    delete meal.phone_number;
+                    delete meal.username;
+                    delete meal.isadmin;
+                    delete meal.province;
+                    delete meal.city;
+                    delete meal.street_and_number;
                 res.json(meal);
             }else{
                 res.sendStatus(404);

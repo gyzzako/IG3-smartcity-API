@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
  * @swagger
  * components:
  *  schemas:
- *      User:
+ *      UserWithoutPassword:
  *          type: object
  *          properties:
  *              id:
@@ -20,9 +20,6 @@ const jwt = require('jsonwebtoken');
  *              username:
  *                  type: string
  *                  description: Username of the user
- *              password:
- *                  type: string
- *                  description: Hashed password of the user
  *              is_admin:
  *                  type: boolean
  *                  description: Determine if a user if an administrator or not
@@ -198,7 +195,7 @@ module.exports.updateUser = async (req, res) => {
  *                   schema:
  *                      type: array
  *                      items:
- *                          $ref: '#/components/schemas/User'
+ *                          $ref: '#/components/schemas/UserWithoutPassword'
  */
 module.exports.getAllUsers = async (req, res) => {
     const rowLimit = req.query.rowLimit !== undefined && req.query.rowLimit !== "" ? parseInt(req.query.rowLimit) : undefined;
@@ -264,7 +261,7 @@ module.exports.getUsersCount = async (req, res) => {
  *           content:
  *               application/json:
  *                   schema:
- *                       $ref: '#/components/schemas/User'
+ *                       $ref: '#/components/schemas/UserWithoutPassword'
  */
 module.exports.getUserById = async (req, res) => {
     const userId = req.params.id; /* le check de l'userID est fait dans le middleware authorization*/
@@ -371,7 +368,7 @@ module.exports.login = async (req, res) => {
                 const token = jwt.sign(
                     payload,
                     process.env.SECRET_TOKEN,
-                    {expiresIn: '1d'}
+                    {expiresIn: '5d'}
                 );
                 res.json(token);
             }

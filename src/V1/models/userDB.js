@@ -10,10 +10,6 @@ module.exports.createUser = async (client, firstname, lastname, phoneNumber, use
 }
 
 module.exports.updateUser = async (client, userId, firstname, lastname, phoneNumber, username, password, isAdmin, province, city, streetAndNumber) => {
-    /*return await client.query(`
-    UPDATE "user" SET firstname = $2, lastname = $3, phone_number = $4, username = $5, password = $6, isAdmin = $7, province = $8, city = $9, street_and_number = $10
-    WHERE id = $1`, [userId, firstname, lastname, phoneNumber, username, password, isAdmin, province, city, streetAndNumber]);
-*/
     const params = [];
     const querySet = [];
     let query = `UPDATE "user" SET `;

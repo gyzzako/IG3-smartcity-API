@@ -7,17 +7,6 @@ const mealDB = require('../models/mealDB');
  * @swagger
  * components:
  *  schemas:
- *      Order:
- *          type: object
- *          properties:
- *              id:
- *                  type: integer
- *              order_date:
- *                  type: string
- *                  description: Order date
- *              user_fk:
- *                  type: integer
- *                  description: User ID of who created the order
  *      OrderWithConcernedUser:
  *          type: object
  *          properties:
@@ -27,7 +16,7 @@ const mealDB = require('../models/mealDB');
  *                  type: string
  *                  description: Order date
  *              user:
- *                  $ref: '#/components/schemas/User'
+ *                  $ref: '#/components/schemas/UserWithoutPassword'
  *  responses:
  *      OrderBadJSONBody:
  *          description: The JSON body is not correct
@@ -68,7 +57,7 @@ const mealDB = require('../models/mealDB');
  */
 module.exports.insertOrder = async (req, res) => {
     /* le check de l'userID est fait dans le middleware authorization*/
-    const {user, order_date, meals_id: mealsId} = req.body;
+    const {user, order_date, meals: mealsId} = req.body;
     const client = await pool.connect();
     try {
         await client.query("BEGIN;");
@@ -153,7 +142,7 @@ module.exports.insertOrder = async (req, res) => {
  *                          - user
  *                          - order_date
  */
-module.exports.updateOrder = async (req, res) => { //TODO: update que pour 1 champs -> si temps
+module.exports.updateOrder = async (req, res) => {
     const {id: orderId, order_date, user} = req.body;
     if(orderId === undefined || orderId === "" || user.id === undefined || user.id === "" || isNaN(user.id) || order_date === undefined || order_date === ""){
         res.sendStatus(400);

@@ -21,7 +21,7 @@ module.exports.getAllOrders = async (client, rowLimit, offset, searchElem) => {
 
     if(searchElem !== undefined){
         params.push("%" + searchElem + "%");
-        query += ` WHERE CAST(o.id AS TEXT) LIKE $${params.length} OR CAST(TO_CHAR(o.order_date::DATE, 'dd-mm-yyyy') AS TEXT) LIKE $${params.length}`;
+        query += ` WHERE CAST(o.id AS TEXT) LIKE $${params.length} OR CAST(TO_CHAR(o.order_date::DATE, 'dd-mm-yyyy') AS TEXT) LIKE $${params.length} OR u.username LIKE $${params.length}`;
     }
 
     query += ` ORDER BY o.id DESC`;
@@ -35,7 +35,6 @@ module.exports.getAllOrders = async (client, rowLimit, offset, searchElem) => {
         params.push(offset);
         query += ` OFFSET $${params.length}`;
     }
-    console.log(query);
     return await client.query(query, params);
 }
 

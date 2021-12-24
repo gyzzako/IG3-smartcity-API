@@ -62,23 +62,23 @@ module.exports.updateMeal = async (client, mealId, name, description, portionNum
 
 module.exports.getAllMeals = async (client, rowLimit, offset, searchElem, isMealAvailableFiltered) => {
     const params = [];
-    let query = `SELECT *, TO_CHAR(meal.publication_date::DATE, 'dd-mm-yyyy') as publication_date, meal.id as id, meal.name as name,
-                category.id as category_id, category.name as category_name FROM meal LEFT JOIN category ON (meal.category_fk = category.id)`;
+    let query = `SELECT *, TO_CHAR(m.publication_date::DATE, 'dd-mm-yyyy') as publication_date, m.id as id, m.name as name,
+                c.id as category_id, c.name as category_name FROM meal m LEFT JOIN "user" u ON m.user_fk = u.id LEFT JOIN category c ON m.category_fk = c.id`;
 
     if(searchElem !== undefined){
         params.push("%" + searchElem + "%");
         if(isMealAvailableFiltered !== undefined && isMealAvailableFiltered){
-            query += ` WHERE (CAST(meal.id AS TEXT) LIKE $${params.length} OR LOWER(meal.name) LIKE $${params.length} OR LOWER(meal.description) LIKE $${params.length} OR CAST(order_fk AS TEXT) LIKE $${params.length}) AND order_fk IS NULL`;
+            query += ` WHERE (CAST(m.id AS TEXT) LIKE $${params.length} OR LOWER(m.name) LIKE $${params.length} OR LOWER(m.description) LIKE $${params.length} OR u.username LIKE $${params.length}) AND m.order_fk IS NULL`;
         }else{
-            query += ` WHERE CAST(meal.id AS TEXT) LIKE $${params.length} OR LOWER(meal.name) LIKE $${params.length} OR LOWER(meal.description) LIKE $${params.length} OR CAST(order_fk AS TEXT) LIKE $${params.length}`;
+            query += ` WHERE CAST(m.id AS TEXT) LIKE $${params.length} OR LOWER(m.name) LIKE $${params.length} OR LOWER(m.description) LIKE $${params.length} OR u.username LIKE $${params.length} OR CAST(m.order_fk AS TEXT) LIKE $${params.length}`;
         }
     }
 
     if(searchElem === undefined && isMealAvailableFiltered !== undefined && isMealAvailableFiltered){
-        query += ` WHERE order_fk IS NULL`;
+        query += ` WHERE m.order_fk IS NULL`;
     }
 
-    query += ` ORDER BY meal.id DESC`;
+    query += ` ORDER BY m.id DESC`;
 
     if(rowLimit !== undefined){
         params.push(rowLimit);
@@ -101,8 +101,8 @@ module.exports.getMealsCount = async (client, searchElem) => {
 }
 
 module.exports.getMealById = async (client, mealId) => {
-    return await client.query(`SELECT *, TO_CHAR(meal.publication_date::DATE, 'dd-mm-yyyy') as publication_date, meal.id as id, meal.name as name,
-        category.id as category_id, category.name as category_name FROM meal LEFT JOIN category ON (meal.category_fk = category.id) WHERE meal.id = $1 LIMIT 1`, [mealId]);
+    return await client.query(`SELECT *, TO_CHAR(m.publication_date::DATE, 'dd-mm-yyyy') as publication_date, m.id as id, m.name as name,
+        c.id as category_id, c.name as category_name FROM meal m LEFT JOIN "user" u ON m.user_fk = u.id LEFT JOIN category c ON m.category_fk = c.id WHERE m.id = $1 LIMIT 1`, [mealId]);
 }
 
 module.exports.getMealImageById = async (client, mealId) => {

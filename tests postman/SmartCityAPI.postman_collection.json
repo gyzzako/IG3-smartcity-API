@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "cb3b747e-df5b-414b-bece-f03fe17aaf8b",
+		"_postman_id": "0a70fa13-92d0-4de7-8804-3351e5c7e4ec",
 		"name": "SmartCityAPI",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -420,8 +420,8 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"The status code should be 403\", () => {\r",
-									"    pm.response.to.have.status(403);\r",
+									"pm.test(\"The status code should be 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
 									"});"
 								],
 								"type": "text/javascript"
@@ -568,11 +568,21 @@
 									"\r",
 									"pm.test(\"All orders containing the search element should be returned\", () => {\r",
 									"    const allOrders = [\r",
-									"        {\r",
-									"            \"id\": 10,\r",
-									"            \"order_date\": \"14-06-2022\",\r",
-									"            \"user_fk\": 8\r",
-									"        }\r",
+									"            {\r",
+									"                \"id\": 10,\r",
+									"                \"order_date\": \"14-06-2022\",\r",
+									"                \"user\": {\r",
+									"                    \"id\": 8,\r",
+									"                    \"firstname\": \"Louis\",\r",
+									"                    \"lastname\": \"Hermant\",\r",
+									"                    \"phone_number\": \"04987777\",\r",
+									"                    \"username\": \"louisiane_01\",\r",
+									"                    \"isadmin\": false,\r",
+									"                    \"province\": \"Namur\",\r",
+									"                    \"city\": \"IESN\",\r",
+									"                    \"street_and_number\": \"Henallux 25\"\r",
+									"                }\r",
+									"    }\r",
 									"    ];\r",
 									"    const response = pm.response.json();\r",
 									"    pm.expect(response).to.be.eql(allOrders);\r",
